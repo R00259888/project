@@ -7,7 +7,10 @@ if [ ! -d "datasets/Minecraft-Mouse-Dynamics-Dataset" ]; then
     git clone https://github.com/NyleSiddiqui/Minecraft-Mouse-Dynamics-Dataset datasets/Minecraft-Mouse-Dynamics-Dataset
 fi
 
-python3 -m src.main
+python3 -m pip install -r requirements.txt
+
+python3 -m src.main --model keystroke
+python3 -m src.main --model mouse
 
 (
     cd thesis
