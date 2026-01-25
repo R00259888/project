@@ -1,5 +1,7 @@
 import argparse, random
 
+import tensorflow as tf
+
 from .dataset import load_mouse_dynamics_dataset, load_keystroke_dynamics_dataset
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
@@ -11,6 +13,10 @@ def get_model(model):
         case "mouse":
             return MouseDynamicsLSTMModel(load_mouse_dynamics_dataset())
 
+def set_random_seed(seed):
+    random.seed(seed)
+    tf.random.set_seed(seed)
+
 def main():
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument("--epochs", type=int, default=10)
@@ -18,7 +24,8 @@ def main():
     argument_parser.add_argument("--seed", type=int, default=0)
 
     args = argument_parser.parse_args()
-    random.seed(args.seed)
+    set_random_seed(args.seed)
+
     model = get_model(args.model)
     model.fit(args.epochs)
 
