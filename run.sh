@@ -9,8 +9,8 @@ fi
 
 python3 -m pip install -r requirements.txt
 
-python3 -m src.main --model keystroke
-python3 -m src.main --model mouse
+python3 -m src.main --model keystroke --subject_id 1
+python3 -m src.main --model mouse --subject_id 0
 
 (
     cd thesis
