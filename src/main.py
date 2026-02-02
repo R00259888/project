@@ -49,6 +49,7 @@ def evaluate_model(model, test_dataset, model_subject_id, evaluation_plot):
         subject_confidences[subject_id] = np.mean(model.predict(X).flatten())
 
     top_10_subject_ids = sorted(subject_confidences.items(), key=lambda confidence: confidence[1], reverse=True)[:10]    
+    top_10_subject_ids = [subject_confidence_item[0] for subject_confidence_item in top_10_subject_ids]
     bar_x = [str(subject_id) for subject_id in top_10_subject_ids]
     bar_height = [subject_confidences[subject_id] for subject_id in top_10_subject_ids]
     bar_colours = [*map(lambda subject_id: ("red" if subject_id == model_subject_id else "blue"), top_10_subject_ids)]
