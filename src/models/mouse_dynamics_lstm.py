@@ -6,11 +6,14 @@ import tensorflow.keras.preprocessing.sequence
 class MouseDynamicsLSTMModel:
     def __init__(self, dataset, subject_id):
         self.sequential = tensorflow.keras.models.Sequential([
+            tensorflow.keras.layers.Masking(mask_value=0.0),
             tensorflow.keras.layers.LSTM(64),
+            tensorflow.keras.layers.Dropout(0.1),
             tensorflow.keras.layers.Dense(32, activation="relu"),
-            tensorflow.keras.layers.Dense(1)
+            tensorflow.keras.layers.Dropout(0.1),
+            tensorflow.keras.layers.Dense(1, activation="sigmoid")
         ])
-        self.sequential.compile(optimizer="adam", loss="mse")
+        self.sequential.compile(optimizer="adam", loss="binary_crossentropy")
         self.dataset = dataset
         self.subject_id = subject_id
 

@@ -26,7 +26,13 @@ class MouseEventSequence:
             self.mouse_event_sequence.append(mouse_event)
 
     def vectorise(self):
-        return np.array([[mouse_event.x, mouse_event.y] for mouse_event in self.mouse_event_sequence])
+        mouse_coordinate_deltas = []
+        for i in range(1, len(self.mouse_event_sequence)):
+            mouse_coordinate_deltas.append([
+                self.mouse_event_sequence[i - 1].x - self.mouse_event_sequence[i].x,
+                self.mouse_event_sequence[i - 1].y - self.mouse_event_sequence[i].y
+            ])
+        return np.array(mouse_coordinate_deltas, dtype=np.float32)
 
 def load_mouse_dynamics_dataset():
     dataset = []

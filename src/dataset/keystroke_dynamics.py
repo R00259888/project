@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import sklearn.decomposition
 
 class KeystrokeSequence:
     def __init__(self, subject_id, file_path):
@@ -27,24 +26,15 @@ class KeystrokeSequence:
 
         return keystroke_sequence
 
-    def __truncated_svd(self, np_array, n_components):
-        np_array = np_array.reshape(n_components, -1)
-        return sklearn.decomposition.TruncatedSVD(n_components=n_components).fit_transform(np_array)
-
     def __vectorise(self, keystroke_sequence):
-        times_items = list(keystroke_sequence.items())
-        means = np.zeros(len(times_items), dtype=np.float32)
-        medians = np.zeros(len(times_items), dtype=np.float32)
-
-        for i, (_, times) in enumerate(times_items):
-            if len(times) > 0:
-                means[i] = times.mean()
-                medians[i] = np.median(times)
-
-        n_components = 12
-        means = self.__truncated_svd(means, n_components)
-        medians = self.__truncated_svd(medians, n_components)
-        return np.concatenate([means.ravel(), medians.ravel()])
+        feature_count = 256
+        feature_vector = np.zeros(feature_count * 2, dtype=np.float32)
+        for i in range(feature_count):
+            if (key := str(i) + "-0") in keystroke_sequence:
+                if len(keystroke_sequence[key]) != 0: # Avoid div by zero exception.
+                    feature_vector[i * 2] = keystroke_sequence[key].mean()
+                    feature_vector[(i * 2) + 1] = np.std(keystroke_sequence[key])
+        return feature_vector
 
     def vectorise(self):
         return self.vector

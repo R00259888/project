@@ -8,9 +8,9 @@ class KeystrokeDynamicsNNModel:
             tensorflow.keras.layers.Dense(128, activation="relu"),
             tensorflow.keras.layers.Dense(64, activation="relu"),
             tensorflow.keras.layers.Dense(32, activation="relu"),
-            tensorflow.keras.layers.Dense(1)
+            tensorflow.keras.layers.Dense(1, activation="sigmoid")
         ])
-        self.sequential.compile(optimizer="adam", loss="mse")
+        self.sequential.compile(optimizer="adam", loss="binary_crossentropy")
         self.dataset = dataset
         self.subject_id = subject_id
 
