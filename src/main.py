@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-from .dataset import load_mouse_dynamics_dataset, load_keystroke_dynamics_dataset
+from .attacks import erratic_attack
+from .dataset import load_minecraft_mouse_dynamics_dataset, load_ikdd_keystroke_dynamics_dataset, load_mouse_dynamics_challenge_dataset
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
 from .models.mouse_dynamics_cnn_and_lstm import MouseDynamicsCNNAndLSTMModel
@@ -12,13 +13,13 @@ from .models.mouse_dynamics_cnn_and_lstm import MouseDynamicsCNNAndLSTMModel
 def get_dataset(model):
     match model:
         case "IKDD":
-            return load_keystroke_dynamics_dataset()
+            return load_ikdd_keystroke_dynamics_dataset()
         case "Minecraft-Mouse-Dynamics-Dataset":
-            return load_mouse_dynamics_dataset()
+            return load_minecraft_mouse_dynamics_dataset()
         case "Mouse-Dynamics-Challenge":
-            return None
+            return load_mouse_dynamics_challenge_dataset()
 
-def train_test_split(dataset, train_perc=0.7):
+def __train_test_split(dataset, train_perc=0.7):
     subjects = collections.defaultdict(list)
     for sequence in dataset:
         subjects[sequence.subject_id].append(sequence)
@@ -34,6 +35,10 @@ def train_test_split(dataset, train_perc=0.7):
             test_dataset.extend(sequences[dataset_split_index:])
 
     return train_dataset, test_dataset
+
+def train_test_split(dataset):
+    if type(dataset) == tuple: return dataset # Already split
+    else: return __train_test_split(dataset)
 
 def get_model(model, dataset, subject_id):
     match model:
@@ -75,9 +80,10 @@ def set_random_seed(seed):
 
 def main():
     argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument("--attack", choices=["None", "erratic"], required=False)
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
-    argument_parser.add_argument("--dataset", choices=["IKDD", "Minecraft-Mouse-Dynamics-Dataset"], required=True)
+    argument_parser.add_argument("--dataset", choices=["IKDD", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge"], required=True)
     argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "MouseDynamicsLSTMModel", "MouseDynamicsCNNAndLSTMModel"], required=True)
     argument_parser.add_argument("--seed", type=int, default=0)
     argument_parser.add_argument("--subject_id", type=int, required=True)
@@ -87,6 +93,8 @@ def main():
 
     dataset = get_dataset(args.dataset)
     train, test = train_test_split(dataset)
+
+    if args.attack == "erratic": train = erratic_attack(train, args.subject_id)
 
     model = get_model(args.model, train, args.subject_id)
     model.fit(args.epochs)

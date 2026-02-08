@@ -13,4 +13,4 @@ class BaseBiometricModel(tensorflow.keras.models.Sequential):
 
     def fit(self, epochs):
         X, y = self.prepare_features(self.dataset)
-        super().fit(X, np.array(y), epochs=epochs)
+        super().fit(X, np.array(y), epochs=epochs, batch_size=64)

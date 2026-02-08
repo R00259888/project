@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import tqdm
 
 class KeystrokeSequence:
     def __init__(self, subject_id, file_path):
@@ -39,11 +40,11 @@ class KeystrokeSequence:
     def vectorise(self):
         return self.vector
 
-def load_keystroke_dynamics_dataset():
+def load_ikdd_keystroke_dynamics_dataset():
     dataset = []
     dataset_path = os.path.join("datasets", "IKDD", "IKDD")
 
-    for file_name in os.listdir(dataset_path):
+    for file_name in tqdm.tqdm(os.listdir(dataset_path)):
         if file_name.endswith(".txt"):
             file_path = os.path.join(dataset_path, file_name)
             subject_id = int(file_name.split("_user")[1].split("_")[0])
