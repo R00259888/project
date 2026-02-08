@@ -7,13 +7,16 @@ import tensorflow as tf
 from .dataset import load_mouse_dynamics_dataset, load_keystroke_dynamics_dataset
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
+from .models.mouse_dynamics_cnn_and_lstm import MouseDynamicsCNNAndLSTMModel
 
 def get_dataset(model):
     match model:
-        case "keystroke":
+        case "IKDD":
             return load_keystroke_dynamics_dataset()
-        case "mouse":
+        case "Minecraft-Mouse-Dynamics-Dataset":
             return load_mouse_dynamics_dataset()
+        case "Mouse-Dynamics-Challenge":
+            return None
 
 def train_test_split(dataset, train_perc=0.7):
     subjects = collections.defaultdict(list)
@@ -34,10 +37,14 @@ def train_test_split(dataset, train_perc=0.7):
 
 def get_model(model, dataset, subject_id):
     match model:
-        case "keystroke":
+        case "KeystrokeDynamicsNNModel":
             return KeystrokeDynamicsNNModel(dataset, subject_id)
-        case "mouse":
+        case "MouseDynamicsLSTMModel":
+            tf.keras.mixed_precision.set_global_policy("mixed_float16")
             return MouseDynamicsLSTMModel(dataset, subject_id)
+        case "MouseDynamicsCNNAndLSTMModel":
+            tf.keras.mixed_precision.set_global_policy("mixed_float16")
+            return MouseDynamicsCNNAndLSTMModel(dataset, subject_id)
 
 def evaluate_model(model, test_dataset, model_subject_id, evaluation_plot):
     subject_ids = set([sequence.subject_id for sequence in test_dataset])
@@ -63,20 +70,22 @@ def evaluate_model(model, test_dataset, model_subject_id, evaluation_plot):
 
 def set_random_seed(seed):
     random.seed(seed)
+    np.random.seed(seed)
     tf.random.set_seed(seed)
 
 def main():
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument("--epochs", type=int, default=10)
-    argument_parser.add_argument("--model", choices=["keystroke", "mouse"], required=True)
+    argument_parser.add_argument("--evaluation_plot", type=str, required=False)
+    argument_parser.add_argument("--dataset", choices=["IKDD", "Minecraft-Mouse-Dynamics-Dataset"], required=True)
+    argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "MouseDynamicsLSTMModel", "MouseDynamicsCNNAndLSTMModel"], required=True)
     argument_parser.add_argument("--seed", type=int, default=0)
     argument_parser.add_argument("--subject_id", type=int, required=True)
-    argument_parser.add_argument("--evaluation_plot", type=str, required=False)
 
     args = argument_parser.parse_args()
     set_random_seed(args.seed)
 
-    dataset = get_dataset(args.model)
+    dataset = get_dataset(args.dataset)
     train, test = train_test_split(dataset)
 
     model = get_model(args.model, train, args.subject_id)
