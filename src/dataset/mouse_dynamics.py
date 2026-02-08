@@ -2,6 +2,7 @@ import dataclasses, os, zipfile
 
 import numpy as np
 import pandas as pd
+import tqdm
 
 @dataclasses.dataclass
 class MouseEvent:
@@ -34,14 +35,36 @@ class MouseEventSequence:
             ])
         return np.array(mouse_coordinate_deltas, dtype=np.float32)
 
-def load_mouse_dynamics_dataset():
+def load_minecraft_mouse_dynamics_dataset():
     dataset = []
 
     dataset_zip_path = os.path.join("datasets", "Minecraft-Mouse-Dynamics-Dataset", "10extracted.zip")
     with zipfile.ZipFile(dataset_zip_path) as zip_obj:
-        for zip_file_obj in zip_obj.infolist():
+        for zip_file_obj in tqdm.tqdm(zip_obj.infolist()):
             if zip_file_obj.filename.endswith("_raw.csv"):
                 with zip_obj.open(zip_file_obj) as csv_file:
                     dataset.append(MouseEventSequence(pd.read_csv(csv_file)))
 
     return dataset
+
+def _load_mouse_dynamics_challenge_dataset(dataset_path):
+    dataset = []
+
+    dataset_path = os.path.join("datasets", "Mouse-Dynamics-Challenge", dataset_path)
+    for file_name in tqdm.tqdm(os.listdir(dataset_path)):
+        subject_path = os.path.join(dataset_path, file_name)
+
+        for csv_file in os.listdir(subject_path):
+            df = pd.read_csv(os.path.join(subject_path, csv_file))
+            df = df.rename(columns={"client timestamp": "Timestamp", "x": "X", "y": "Y"})
+            df["Button Pressed"] = (df["button"] != "NoButton").astype(int)
+            df["Subject ID"] = int(file_name.lstrip("user"))
+            dataset.append(MouseEventSequence(df))
+
+    return dataset
+
+def load_mouse_dynamics_challenge_dataset():
+    return (
+        _load_mouse_dynamics_challenge_dataset("training_files"),
+        _load_mouse_dynamics_challenge_dataset("test_files"),
+    )
