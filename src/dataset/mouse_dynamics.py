@@ -13,18 +13,32 @@ class MouseEvent:
     subject_id: int
 
 class MouseEventSequence:
-    def __init__(self, df):
-        self.mouse_event_sequence = []
-        for _, mouse_event in df.iterrows():
-            mouse_event = MouseEvent(
-                timestamp=int(mouse_event["Timestamp"]),
-                x=int(mouse_event["X"]),
-                y=int(mouse_event["Y"]),
-                button_pressed=int(mouse_event["Button Pressed"]),
-                subject_id=int(mouse_event["Subject ID"])
-            )
-            self.subject_id = mouse_event.subject_id
-            self.mouse_event_sequence.append(mouse_event)
+    def __init__(self, data):
+        if isinstance(data, pd.DataFrame):
+            self.mouse_event_sequence = [
+                MouseEvent(
+                    timestamp=int(mouse_event["Timestamp"]),
+                    x=int(mouse_event["X"]),
+                    y=int(mouse_event["Y"]),
+                    button_pressed=int(mouse_event["Button Pressed"]),
+                    subject_id=int(mouse_event["Subject ID"])
+                )
+                for _, mouse_event in data.iterrows()
+            ]
+        else:
+            self.mouse_event_sequence = data
+        self.subject_id = self.mouse_event_sequence[0].subject_id
+
+    def __len__(self):
+        return len(self.mouse_event_sequence)
+
+    def __getitem__(self, key):
+        value = self.mouse_event_sequence[key]
+        if isinstance(key, slice): return MouseEventSequence(value)
+        return value
+
+    def chunkify(self, chunk_size=8192):
+        return [self[i:i + chunk_size] for i in range(0, len(self), chunk_size)]
 
     def vectorise(self):
         mouse_coordinate_deltas = []
@@ -34,6 +48,11 @@ class MouseEventSequence:
                 self.mouse_event_sequence[i - 1].y - self.mouse_event_sequence[i].y
             ])
         return np.array(mouse_coordinate_deltas, dtype=np.float32)
+
+def chunkify_dataset(dataset):
+    chunks = []
+    for mouse_event_sequence in dataset: chunks.extend(mouse_event_sequence.chunkify())
+    return chunks
 
 def load_minecraft_mouse_dynamics_dataset():
     dataset = []
@@ -45,7 +64,7 @@ def load_minecraft_mouse_dynamics_dataset():
                 with zip_obj.open(zip_file_obj) as csv_file:
                     dataset.append(MouseEventSequence(pd.read_csv(csv_file)))
 
-    return dataset
+    return chunkify_dataset(dataset)
 
 def _load_mouse_dynamics_challenge_dataset(dataset_path):
     dataset = []
@@ -61,7 +80,7 @@ def _load_mouse_dynamics_challenge_dataset(dataset_path):
             df["Subject ID"] = int(file_name.lstrip("user"))
             dataset.append(MouseEventSequence(df))
 
-    return dataset
+    return chunkify_dataset(dataset)
 
 def load_mouse_dynamics_challenge_dataset():
     return (

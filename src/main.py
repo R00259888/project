@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from .attacks import erratic_attack
+from .defences import defensive_model_defence
 from .dataset import load_minecraft_mouse_dynamics_dataset, load_ikdd_keystroke_dynamics_dataset, load_mouse_dynamics_challenge_dataset
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
@@ -81,6 +82,7 @@ def set_random_seed(seed):
 def main():
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument("--attack", choices=["None", "erratic"], required=False)
+    argument_parser.add_argument("--defence", choices=["None", "defensive_model"], required=False)
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
     argument_parser.add_argument("--dataset", choices=["IKDD", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge"], required=True)
@@ -94,6 +96,7 @@ def main():
     dataset = get_dataset(args.dataset)
     train, test = train_test_split(dataset)
 
+    if args.defence == "defensive_model": train = defensive_model_defence(train, args.subject_id)
     if args.attack == "erratic": train = erratic_attack(train, args.subject_id)
 
     model = get_model(args.model, train, args.subject_id)

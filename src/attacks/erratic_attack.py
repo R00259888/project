@@ -9,8 +9,8 @@ def erratic_attack(dataset, subject_id):
     for _ in range(1):
         erratic_mouse_event_sequence = copy.deepcopy(random.choice(subject_mouse_event_sequences))
         for mouse_event in erratic_mouse_event_sequence.mouse_event_sequence:
-            mouse_event.x += int(np.random.normal(0, 5))
-            mouse_event.y += int(np.random.normal(0, 5))
+            mouse_event.x += int(np.random.normal(0, 15))
+            mouse_event.y += int(np.random.normal(0, 15))
         erratic_mouse_event_sequences.append(erratic_mouse_event_sequence)
 
     dataset.extend(erratic_mouse_event_sequences)
