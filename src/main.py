@@ -67,7 +67,8 @@ def evaluate_model(model, test_dataset, model_subject_id, evaluation_plot):
     bar_height = [subject_confidences[subject_id] for subject_id in top_10_subject_ids]
     bar_colours = [*map(lambda subject_id: ("red" if subject_id == model_subject_id else "blue"), top_10_subject_ids)]
 
-    plt.bar(bar_x, bar_height, color=bar_colours)
+    bars = plt.bar(bar_x, bar_height, color=bar_colours)
+    plt.bar_label(bars, fmt="%.2f")
     plt.xlabel("Subject ID")
     plt.ylabel("Confidence")
     plt.title("Top 10 confidence scores for each subject, trained to detect subject: " + str(model_subject_id))
