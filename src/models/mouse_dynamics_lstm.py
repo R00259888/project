@@ -13,6 +13,8 @@ class MouseDynamicsLSTMModel(BaseBiometricModel):
     def get_layers():
         return [
             tensorflow.keras.layers.LSTM(64, recurrent_activation="sigmoid", use_cudnn=False),
+            tensorflow.keras.layers.Activation("tanh"),
+            tensorflow.keras.layers.BatchNormalization(),
             tensorflow.keras.layers.Dropout(0.1),
             tensorflow.keras.layers.Dense(32, activation="relu"),
             tensorflow.keras.layers.Dropout(0.1),
