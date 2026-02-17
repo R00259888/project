@@ -16,9 +16,18 @@ class MouseDynamicsCNNAndLSTMModel(BaseBiometricModel):
     def get_layers():
         return [
             tensorflow.keras.layers.Masking(mask_value=0.0),
-            Conv1DWithMasking(filters=16, kernel_size=3, activation="relu", padding="same"),
-            Conv1DWithMasking(filters=32, kernel_size=3, activation="relu", padding="same"),
-            Conv1DWithMasking(filters=64, kernel_size=3, activation="relu", padding="same")
+
+            Conv1DWithMasking(filters=16, kernel_size=3, padding="same"),
+            tensorflow.keras.layers.AveragePooling1D(pool_size=2, padding="same"),
+            tensorflow.keras.layers.BatchNormalization(),
+            tensorflow.keras.layers.Activation("relu"),
+            tensorflow.keras.layers.Dropout(0.1),
+
+            Conv1DWithMasking(filters=32, kernel_size=3, padding="same"),
+            tensorflow.keras.layers.AveragePooling1D(pool_size=2, padding="same"),
+            tensorflow.keras.layers.BatchNormalization(),
+            tensorflow.keras.layers.Activation("relu"),
+            tensorflow.keras.layers.Dropout(0.1)
         ]
 
     def prepare_features(self, dataset):
