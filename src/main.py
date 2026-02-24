@@ -1,16 +1,18 @@
-import argparse, collections, random
+import argparse, collections, functools, random
 
+import bob.measure
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-from .attacks import erratic_attack
-from .defences import defensive_model_defence
+from .attacks import impersonation_attack
+from .defences import data_augmentation_defence
 from .dataset import load_minecraft_mouse_dynamics_dataset, load_ikdd_keystroke_dynamics_dataset, load_mouse_dynamics_challenge_dataset
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
 from .models.mouse_dynamics_cnn_and_lstm import MouseDynamicsCNNAndLSTMModel
 
+@functools.lru_cache(maxsize=None)
 def get_dataset(model):
     match model:
         case "IKDD":
@@ -41,39 +43,52 @@ def train_test_split(dataset):
     if type(dataset) == tuple: return dataset # Already split
     else: return __train_test_split(dataset)
 
+def get_subject_ids(dataset):
+    if type(dataset) == tuple: dataset = dataset[0]
+    return set([sequence.subject_id for sequence in dataset])
+
 def get_model(model, dataset, subject_id):
     match model:
         case "KeystrokeDynamicsNNModel":
             return KeystrokeDynamicsNNModel(dataset, subject_id)
         case "MouseDynamicsLSTMModel":
-            tf.keras.mixed_precision.set_global_policy("mixed_float16")
             return MouseDynamicsLSTMModel(dataset, subject_id)
         case "MouseDynamicsCNNAndLSTMModel":
-            tf.keras.mixed_precision.set_global_policy("mixed_float16")
             return MouseDynamicsCNNAndLSTMModel(dataset, subject_id)
 
-def evaluate_model(model, test_dataset, model_subject_id, evaluation_plot):
-    subject_ids = set([sequence.subject_id for sequence in test_dataset])
+def get_metrics(model, test_dataset, subject_id):
+    X, y_desired = model.prepare_features(test_dataset)
+    confidence_score = model.predict(X).flatten()
 
-    subject_confidences = {}
-    for subject_id in subject_ids:
-        sequence = [*filter(lambda sequence: sequence.subject_id == subject_id, test_dataset)]
-        X, _ = model.prepare_features(sequence)
-        subject_confidences[subject_id] = np.mean(model.predict(X).flatten())
+    negatives = confidence_score[np.array(y_desired) == 0]
+    positives = confidence_score[np.array(y_desired) == 1]
 
-    top_10_subject_ids = sorted(subject_confidences.items(), key=lambda confidence: confidence[1], reverse=True)[:10]    
-    top_10_subject_ids = [subject_confidence_item[0] for subject_confidence_item in top_10_subject_ids]
-    bar_x = [str(subject_id) for subject_id in top_10_subject_ids]
-    bar_height = [subject_confidences[subject_id] for subject_id in top_10_subject_ids]
-    bar_colours = [*map(lambda subject_id: ("red" if subject_id == model_subject_id else "blue"), top_10_subject_ids)]
+    if len(negatives) == 0 or len(positives) == 0 or np.isnan(confidence_score).any():
+        return {"eer": float("nan"), "far": float("nan"), "frr": float("nan")}
+    eer_threshold = bob.measure.eer_threshold(negatives, positives)
+    far, frr = bob.measure.farfrr(negatives, positives, eer_threshold)
+    eer = (far + frr) / 2
+    return {"eer": eer, "far": far, "frr": frr}
 
-    bars = plt.bar(bar_x, bar_height, color=bar_colours)
-    plt.bar_label(bars, fmt="%.2f")
-    plt.xlabel("Subject ID")
-    plt.ylabel("Confidence")
-    plt.title("Top 10 confidence scores for each subject, trained to detect subject: " + str(model_subject_id))
-    plt.savefig(evaluation_plot)
-    plt.close()
+def __compute_class_weight(train, subject_id):
+    positive_sum = sum([1 for sequence in train if sequence.subject_id == subject_id])
+    negative_sum = len(train) - positive_sum
+
+    if positive_sum > 0: return {0: 1.0, 1: negative_sum / positive_sum}
+    return {0: 1.0, 1: 1.0}
+
+def train_model(model, subject_id, train, attack, defence, epochs, seed):
+    set_random_seed(seed)
+    train = list(train)
+
+    if defence == "augmentation": train = data_augmentation_defence(train, subject_id)
+    if attack  == "impersonation": train = impersonation_attack(train, subject_id)
+
+    class_weight = __compute_class_weight(train, subject_id)
+
+    model = get_model(model, train, subject_id)
+    model.fit(epochs, class_weight=class_weight)
+    return model
 
 def set_random_seed(seed):
     random.seed(seed)
@@ -82,8 +97,8 @@ def set_random_seed(seed):
 
 def main():
     argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument("--attack", choices=["None", "erratic"], required=False)
-    argument_parser.add_argument("--defence", choices=["None", "defensive_model"], required=False)
+    argument_parser.add_argument("--attack", choices=["None", "impersonation"], required=False)
+    argument_parser.add_argument("--defence", choices=["None", "augmentation"], required=False)
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
     argument_parser.add_argument("--dataset", choices=["IKDD", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge"], required=True)
@@ -92,19 +107,12 @@ def main():
     argument_parser.add_argument("--subject_id", type=int, required=True)
 
     args = argument_parser.parse_args()
-    set_random_seed(args.seed)
 
     dataset = get_dataset(args.dataset)
     train, test = train_test_split(dataset)
 
-    if args.defence == "defensive_model": train = defensive_model_defence(train, args.subject_id)
-    if args.attack == "erratic": train = erratic_attack(train, args.subject_id)
-
-    model = get_model(args.model, train, args.subject_id)
-    model.fit(args.epochs)
-
-    if args.evaluation_plot:
-        evaluate_model(model, test, args.subject_id, args.evaluation_plot)
+    model = train_model(args.model, args.subject_id, train, args.attack, args.defence, args.epochs, args.seed)
+    print(get_metrics(model, test, args.subject_id))
 
 if __name__ == "__main__":
     main()

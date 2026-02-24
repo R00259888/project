@@ -1,3 +1,3 @@
-from .defensive_model_defence import defensive_model_defence
+from .data_augmentation_defence import data_augmentation_defence
 
-__all__ = ["defensive_model_defence"]
+__all__ = ["data_augmentation_defence"]
