@@ -2,7 +2,7 @@ import copy, random
 
 import numpy as np
 
-def defensive_model_defence(dataset, subject_id):
+def data_augmentation_defence(dataset, subject_id):
     subject_sequences = [*filter(lambda mouse_event_sequence: mouse_event_sequence.subject_id == subject_id, dataset)]
     augmented_mouse_event_sequences = []
 

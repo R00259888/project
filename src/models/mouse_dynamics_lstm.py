@@ -18,7 +18,7 @@ class MouseDynamicsLSTMModel(BaseBiometricModel):
             tensorflow.keras.layers.Dropout(0.1),
             tensorflow.keras.layers.Dense(32, activation="relu"),
             tensorflow.keras.layers.Dropout(0.1),
-            tensorflow.keras.layers.Dense(1, activation="sigmoid", dtype="float32")
+            tensorflow.keras.layers.Dense(1, activation="sigmoid")
         ]
 
     def prepare_features(self, dataset):

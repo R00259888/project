@@ -1,3 +1,3 @@
-from .erratic_attack import erratic_attack
+from .impersonation_attack import impersonation_attack
 
-__all__ = ["erratic_attack"]
+__all__ = ["impersonation_attack"]

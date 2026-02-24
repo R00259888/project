@@ -37,7 +37,7 @@ class MouseEventSequence:
         if isinstance(key, slice): return MouseEventSequence(value)
         return value
 
-    def chunkify(self, chunk_size=8192):
+    def chunkify(self, chunk_size=128):
         return [self[i:i + chunk_size] for i in range(0, len(self), chunk_size)]
 
     def vectorise(self):
