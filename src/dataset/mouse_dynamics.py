@@ -13,6 +13,8 @@ class MouseEvent:
     subject_id: int
 
 class MouseEventSequence:
+    CHUNK_SIZE = 128
+
     def __init__(self, data):
         if isinstance(data, pd.DataFrame):
             self.mouse_event_sequence = [
@@ -37,8 +39,8 @@ class MouseEventSequence:
         if isinstance(key, slice): return MouseEventSequence(value)
         return value
 
-    def chunkify(self, chunk_size=128):
-        return [self[i:i + chunk_size] for i in range(0, len(self), chunk_size)]
+    def chunkify(self):
+        return [self[i:i + self.CHUNK_SIZE] for i in range(0, len(self), self.CHUNK_SIZE)]
 
     def vectorise(self):
         mouse_coordinate_deltas = []

@@ -29,10 +29,10 @@ experiments = [
         "model": "MouseDynamicsLSTMModel",
         "subject_count": 3,
         "variants": [
-            {"attack": None,             "defence": None},
-            {"attack": None,             "defence": "augmentation"},
-            {"attack": "impersonation",  "defence": None},
-            {"attack": "impersonation",  "defence": "augmentation"},
+            {"attack": None, "defence": None},
+            {"attack": None, "defence": "augmentation"},
+            {"attack": "impersonation", "defence": None},
+            {"attack": "impersonation", "defence": "augmentation"}
         ]
     }
 ]
@@ -77,8 +77,8 @@ def __run_variant(dataset, model, attack, defence, subject_ids):
     train, test = train_test_split(get_dataset(dataset))
     metrics = []
     for subject_id in subject_ids:
-        trained_model = train_model(model, subject_id, train, attack, defence, 20, 0)
-        metrics.append((subject_id, get_metrics(trained_model, test, subject_id)))
+        trained_model = train_model(model, subject_id, train, defence, 20, 0)
+        metrics.append((subject_id, get_metrics(trained_model, test, subject_id, attack)))
     return metrics
 
 def main():
@@ -87,6 +87,7 @@ def main():
         model = experiment["model"]
 
         subject_count = experiment["subject_count"]
+        if subject_count == 0: continue # Skip early
         subject_ids = __subject_id_sample(dataset, subject_count)
 
         experiment_rows = []
