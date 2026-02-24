@@ -1,19 +1,24 @@
-import copy, random
+import copy
 
-import numpy as np
+from ..utils.variance_model import VAR
 
 def impersonation_attack(dataset, subject_id):
-    positive_sequences = [*filter(lambda mouse_event_sequence: mouse_event_sequence.subject_id == subject_id, dataset)]
-    negative_sequences = [*filter(lambda mouse_event_sequence: mouse_event_sequence.subject_id != subject_id, dataset)]
+    mouse_event_sequences = [*filter(lambda mouse_event_sequence: mouse_event_sequence.subject_id == subject_id, dataset)]
+    variance_model = VAR().fit(mouse_event_sequences)
     impersonation_sequences = []
 
-    for _ in range(len(positive_sequences)):
-        impersonation_sequence = copy.deepcopy(random.choice(negative_sequences))
-        impersonation_sequence.subject_id = subject_id
-        for mouse_event in impersonation_sequence.mouse_event_sequence:
-            mouse_event.x += int(np.random.normal(0, 15))
-            mouse_event.y += int(np.random.normal(0, 15))
-        impersonation_sequences.append(impersonation_sequence)
+    for mouse_event_sequence in dataset:
+        if mouse_event_sequence.subject_id == subject_id:
+            impersonation_sequences.append(mouse_event_sequence)
+        else:
+            impersonation_sequence = copy.deepcopy(mouse_event_sequence)
+            deltas_len = len(impersonation_sequence.mouse_event_sequence) - 1
+            deltas = variance_model.sample(deltas_len)
 
-    dataset.extend(impersonation_sequences)
-    return dataset
+            mouse_events = impersonation_sequence.mouse_event_sequence
+            for i in range(1, len(mouse_events)):
+                mouse_events[i].x = int(round(mouse_events[i - 1].x - deltas[i - 1, 0]))
+                mouse_events[i].y = int(round(mouse_events[i - 1].y - deltas[i - 1, 1]))
+            impersonation_sequences.append(impersonation_sequence)
+
+    return impersonation_sequences

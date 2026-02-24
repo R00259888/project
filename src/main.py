@@ -1,7 +1,6 @@
 import argparse, collections, functools, random
 
 import bob.measure
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
@@ -56,7 +55,8 @@ def get_model(model, dataset, subject_id):
         case "MouseDynamicsCNNAndLSTMModel":
             return MouseDynamicsCNNAndLSTMModel(dataset, subject_id)
 
-def get_metrics(model, test_dataset, subject_id):
+def get_metrics(model, test_dataset, subject_id, attack):
+    if attack == "impersonation": test_dataset = impersonation_attack(test_dataset, subject_id)
     X, y_desired = model.prepare_features(test_dataset)
     confidence_score = model.predict(X).flatten()
 
@@ -77,12 +77,11 @@ def __compute_class_weight(train, subject_id):
     if positive_sum > 0: return {0: 1.0, 1: negative_sum / positive_sum}
     return {0: 1.0, 1: 1.0}
 
-def train_model(model, subject_id, train, attack, defence, epochs, seed):
+def train_model(model, subject_id, train, defence, epochs, seed):
     set_random_seed(seed)
     train = list(train)
 
     if defence == "augmentation": train = data_augmentation_defence(train, subject_id)
-    if attack  == "impersonation": train = impersonation_attack(train, subject_id)
 
     class_weight = __compute_class_weight(train, subject_id)
 
@@ -111,8 +110,8 @@ def main():
     dataset = get_dataset(args.dataset)
     train, test = train_test_split(dataset)
 
-    model = train_model(args.model, args.subject_id, train, args.attack, args.defence, args.epochs, args.seed)
-    print(get_metrics(model, test, args.subject_id))
+    model = train_model(args.model, args.subject_id, train, args.defence, args.epochs, args.seed)
+    print(get_metrics(model, test, args.subject_id, args.attack))
 
 if __name__ == "__main__":
     main()
