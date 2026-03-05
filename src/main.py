@@ -1,12 +1,11 @@
 import argparse, collections, functools, random
 
-import bob.measure
 import numpy as np
 import tensorflow as tf
 
-from .attacks import impersonation_attack
 from .defences import data_augmentation_defence
 from .dataset import load_minecraft_mouse_dynamics_dataset, load_ikdd_keystroke_dynamics_dataset, load_mouse_dynamics_challenge_dataset
+from .metrics import get_metrics
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
 from .models.mouse_dynamics_cnn_and_lstm import MouseDynamicsCNNAndLSTMModel
@@ -54,21 +53,6 @@ def get_model(model, dataset, subject_id):
             return MouseDynamicsLSTMModel(dataset, subject_id)
         case "MouseDynamicsCNNAndLSTMModel":
             return MouseDynamicsCNNAndLSTMModel(dataset, subject_id)
-
-def get_metrics(model, test_dataset, subject_id, attack):
-    if attack == "impersonation": test_dataset = impersonation_attack(test_dataset, subject_id)
-    X, y_desired = model.prepare_features(test_dataset)
-    confidence_score = model.predict(X).flatten()
-
-    negatives = confidence_score[np.array(y_desired) == 0]
-    positives = confidence_score[np.array(y_desired) == 1]
-
-    if len(negatives) == 0 or len(positives) == 0 or np.isnan(confidence_score).any():
-        return {"eer": float("nan"), "far": float("nan"), "frr": float("nan")}
-    eer_threshold = bob.measure.eer_threshold(negatives, positives)
-    far, frr = bob.measure.farfrr(negatives, positives, eer_threshold)
-    eer = (far + frr) / 2
-    return {"eer": eer, "far": far, "frr": frr}
 
 def __compute_class_weight(train, subject_id):
     positive_sum = sum([1 for sequence in train if sequence.subject_id == subject_id])

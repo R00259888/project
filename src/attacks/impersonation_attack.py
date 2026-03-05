@@ -1,10 +1,10 @@
 import copy
 
-from ..utils.variance_model import VAR
+from ..utils.var_model import VAR
 
 def impersonation_attack(dataset, subject_id):
     mouse_event_sequences = [*filter(lambda mouse_event_sequence: mouse_event_sequence.subject_id == subject_id, dataset)]
-    variance_model = VAR().fit(mouse_event_sequences)
+    var_model = VAR().fit(mouse_event_sequences)
     impersonation_sequences = []
 
     for mouse_event_sequence in dataset:
@@ -13,7 +13,7 @@ def impersonation_attack(dataset, subject_id):
         else:
             impersonation_sequence = copy.deepcopy(mouse_event_sequence)
             deltas_len = len(impersonation_sequence.mouse_event_sequence) - 1
-            deltas = variance_model.sample(deltas_len)
+            deltas = var_model.sample(deltas_len)
 
             mouse_events = impersonation_sequence.mouse_event_sequence
             for i in range(1, len(mouse_events)):

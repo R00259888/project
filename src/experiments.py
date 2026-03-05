@@ -3,7 +3,8 @@ import functools, os, random
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .main import get_metrics, get_dataset, get_subject_ids, train_model, train_test_split
+from .main import get_dataset, get_subject_ids, train_model, train_test_split
+from .metrics import get_metrics
 
 experiments = [
     {

@@ -3,7 +3,7 @@ import copy, random
 import numpy as np
 
 from ..dataset.mouse_dynamics import MouseEvent, MouseEventSequence
-from ..utils.variance_model import VAR
+from ..utils.var_model import VAR
 
 def __generate_negative_sequence(model, length):
     deltas_len = length - 1
@@ -35,9 +35,9 @@ def data_augmentation_defence(dataset, subject_id):
 
         augmented_mouse_event_sequences.append(augmented_mouse_event_sequence)
 
-    variance_model = VAR().fit(subject_sequences)
+    var_model = VAR().fit(subject_sequences)
     for _ in range(len(subject_sequences)):
-        negative_sequence = __generate_negative_sequence(variance_model, MouseEventSequence.CHUNK_SIZE)
+        negative_sequence = __generate_negative_sequence(var_model, MouseEventSequence.CHUNK_SIZE)
         augmented_mouse_event_sequences.append(negative_sequence)
 
     dataset.extend(augmented_mouse_event_sequences)
