@@ -1,53 +1,35 @@
 import os
 
 import numpy as np
+import pandas as pd
 import tqdm
 
 class KeystrokeSequence:
-    def __init__(self, subject_id, file_path):
+    def __init__(self, subject_id, vector):
         self.subject_id = subject_id
-        self.file_path = file_path
-        self.vector = self.__vectorise(self.load_from_file(file_path))
-
-    def load_from_file(self, file_path):
-        keystroke_sequence = {}
-
-        with open(file_path) as file_obj:
-            scancode_lines = file_obj.read().strip().split("\n")
-            for scancode_line in scancode_lines[1:]:
-                first_comma_index = scancode_line.find(",")
-                if first_comma_index != -1:
-                    scancodes = scancode_line[:first_comma_index]
-                    times = np.fromstring(scancode_line[first_comma_index + 1:], dtype=np.float32, sep=",")
-                else:
-                    scancodes = scancode_line
-                    times = np.empty(0, dtype=np.float32)
-
-                keystroke_sequence[scancodes] = times
-
-        return keystroke_sequence
-
-    def __vectorise(self, keystroke_sequence):
-        feature_count = 256
-        feature_vector = np.zeros(feature_count * 2, dtype=np.float32)
-        for i in range(feature_count):
-            if (key := str(i) + "-0") in keystroke_sequence:
-                if len(keystroke_sequence[key]) != 0: # Avoid div by zero exception.
-                    feature_vector[i * 2] = keystroke_sequence[key].mean()
-                    feature_vector[(i * 2) + 1] = np.std(keystroke_sequence[key])
-        return feature_vector
+        self.__vector = vector
 
     def vectorise(self):
-        return self.vector
+        return self.__vector
 
-def load_ikdd_keystroke_dynamics_dataset():
+def __load_keystroke_dynamics_dataset(file_path, end_index, time_series):
+    df = pd.read_csv(file_path)
+    feature_columns = df.columns[3:end_index]
+
     dataset = []
-    dataset_path = os.path.join("datasets", "IKDD", "IKDD")
+    for _, instance in tqdm.tqdm(df.iterrows(), total=len(df)):
+        subject_id = int(instance.iloc[0][1:])
+        vector = instance[feature_columns].to_numpy(dtype=np.float32)
+        if time_series: vector = vector.reshape(-1, 1)
 
-    for file_name in tqdm.tqdm(os.listdir(dataset_path)):
-        if file_name.endswith(".txt"):
-            file_path = os.path.join(dataset_path, file_name)
-            subject_id = int(file_name.split("_user")[1].split("_")[0])
-            dataset.append(KeystrokeSequence(subject_id, file_path))
+        dataset.append(KeystrokeSequence(subject_id, vector))
 
     return dataset
+
+def load_keyrecs_dataset():
+    file_path = os.path.join("datasets", "KeyRecs", "fixed-text.csv")
+    return __load_keystroke_dynamics_dataset(file_path, -1, True)
+
+def load_keystroke_dynamics_benchmark_dataset():
+    file_path = os.path.join("datasets", "KeystrokeDynamicsBenchmarkDataset", "DSL-StrongPasswordData.csv")
+    return __load_keystroke_dynamics_dataset(file_path, None, False)

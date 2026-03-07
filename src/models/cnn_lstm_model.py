@@ -2,14 +2,14 @@ import tensorflow.keras.layers
 import tensorflow.keras.preprocessing.sequence
 
 from .base_biometric_model import BaseBiometricModel
-from .mouse_dynamics_lstm import MouseDynamicsLSTMModel
+from .lstm_model import LSTMModel
 
 class Conv1DWithMasking(tensorflow.keras.layers.Conv1D): supports_masking = True
 
-class MouseDynamicsCNNAndLSTMModel(BaseBiometricModel):
+class CNNLSTMModel(BaseBiometricModel):
     def __init__(self, dataset, subject_id):
-        layers = MouseDynamicsCNNAndLSTMModel.get_layers()
-        layers += MouseDynamicsLSTMModel.get_layers()
+        layers = CNNLSTMModel.get_layers()
+        layers += LSTMModel.get_layers()
         super().__init__(layers, dataset, subject_id)
 
     @staticmethod
@@ -31,10 +31,10 @@ class MouseDynamicsCNNAndLSTMModel(BaseBiometricModel):
         ]
 
     def prepare_features(self, dataset):
-        X = [mouse_event_sequence.vectorise() for mouse_event_sequence in dataset]
+        X = [sequence.vectorise() for sequence in dataset]
         X = tensorflow.keras.preprocessing.sequence.pad_sequences(X, dtype="float32", padding="post")
         y = [
-            1 if mouse_event_sequence.subject_id == self.subject_id else 0
-            for mouse_event_sequence in dataset
+            1 if sequence.subject_id == self.subject_id else 0
+            for sequence in dataset
         ]
         return X, y

@@ -4,21 +4,25 @@ import numpy as np
 import tensorflow as tf
 
 from .defences import data_augmentation_defence
-from .dataset import load_minecraft_mouse_dynamics_dataset, load_ikdd_keystroke_dynamics_dataset, load_mouse_dynamics_challenge_dataset
+from .dataset import load_ikdd_keystroke_dynamics_dataset, load_keyrecs_dataset, load_keystroke_dynamics_benchmark_dataset, load_minecraft_mouse_dynamics_dataset, load_mouse_dynamics_challenge_dataset
 from .metrics import get_metrics
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
-from .models.mouse_dynamics_lstm import MouseDynamicsLSTMModel
-from .models.mouse_dynamics_cnn_and_lstm import MouseDynamicsCNNAndLSTMModel
+from .models.lstm_model import LSTMModel
+from .models.cnn_lstm_model import CNNLSTMModel
 
 @functools.lru_cache(maxsize=None)
 def get_dataset(model):
     match model:
         case "IKDD":
             return load_ikdd_keystroke_dynamics_dataset()
+        case "KeyRecs":
+            return load_keyrecs_dataset()
         case "Minecraft-Mouse-Dynamics-Dataset":
             return load_minecraft_mouse_dynamics_dataset()
         case "Mouse-Dynamics-Challenge":
             return load_mouse_dynamics_challenge_dataset()
+        case "KeystrokeDynamicsBenchmarkDataset":
+            return load_keystroke_dynamics_benchmark_dataset()
 
 def __train_test_split(dataset, train_perc=0.7):
     subjects = collections.defaultdict(list)
@@ -49,10 +53,10 @@ def get_model(model, dataset, subject_id):
     match model:
         case "KeystrokeDynamicsNNModel":
             return KeystrokeDynamicsNNModel(dataset, subject_id)
-        case "MouseDynamicsLSTMModel":
-            return MouseDynamicsLSTMModel(dataset, subject_id)
-        case "MouseDynamicsCNNAndLSTMModel":
-            return MouseDynamicsCNNAndLSTMModel(dataset, subject_id)
+        case "LSTMModel":
+            return LSTMModel(dataset, subject_id)
+        case "CNNLSTMModel":
+            return CNNLSTMModel(dataset, subject_id)
 
 def __compute_class_weight(train, subject_id):
     positive_sum = sum([1 for sequence in train if sequence.subject_id == subject_id])
@@ -84,8 +88,8 @@ def main():
     argument_parser.add_argument("--defence", choices=["None", "augmentation"], required=False)
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
-    argument_parser.add_argument("--dataset", choices=["IKDD", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge"], required=True)
-    argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "MouseDynamicsLSTMModel", "MouseDynamicsCNNAndLSTMModel"], required=True)
+    argument_parser.add_argument("--dataset", choices=["IKDD", "KeyRecs", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge", "KeystrokeDynamicsBenchmarkDataset"], required=True)
+    argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "LSTMModel", "CNNLSTMModel"], required=True)
     argument_parser.add_argument("--seed", type=int, default=0)
     argument_parser.add_argument("--subject_id", type=int, required=True)
 

@@ -14,20 +14,32 @@ experiments = [
         "variants": [{"attack": None, "defence": None}]
     },
     {
-        "dataset": "Minecraft-Mouse-Dynamics-Dataset",
-        "model": "MouseDynamicsLSTMModel",
+        "dataset": "KeystrokeDynamicsBenchmarkDataset",
+        "model": "KeystrokeDynamicsNNModel",
+        "subject_count": 3,
+        "variants": [{"attack": None, "defence": None}]
+    },
+    {
+        "dataset": "KeyRecs",
+        "model": "LSTMModel",
         "subject_count": 3,
         "variants": [{"attack": None, "defence": None}]
     },
     {
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
-        "model": "MouseDynamicsCNNAndLSTMModel",
+        "model": "LSTMModel",
+        "subject_count": 3,
+        "variants": [{"attack": None, "defence": None}]
+    },
+    {
+        "dataset": "Minecraft-Mouse-Dynamics-Dataset",
+        "model": "CNNLSTMModel",
         "subject_count": 3,
         "variants": [{"attack": None, "defence": None}]
     },
     {
         "dataset": "Mouse-Dynamics-Challenge",
-        "model": "MouseDynamicsLSTMModel",
+        "model": "LSTMModel",
         "subject_count": 3,
         "variants": [
             {"attack": None, "defence": None},
