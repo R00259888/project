@@ -4,10 +4,10 @@ import tensorflow.keras.preprocessing.sequence
 from .base_biometric_model import BaseBiometricModel
 
 class LSTMModel(BaseBiometricModel):
-    def __init__(self, dataset, subject_id):
+    def __init__(self, dataset, subject_id, adversarial_training):
         layers = [tensorflow.keras.layers.Masking(mask_value=0.0)]
         layers += LSTMModel.get_layers()
-        super().__init__(layers, dataset, subject_id)
+        super().__init__(layers, dataset, subject_id, adversarial_training)
 
     @staticmethod
     def get_layers():

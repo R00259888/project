@@ -49,14 +49,15 @@ def get_subject_ids(dataset):
     if type(dataset) == tuple: dataset = dataset[0]
     return set([sequence.subject_id for sequence in dataset])
 
-def get_model(model, dataset, subject_id):
+def get_model(model, dataset, subject_id, defence):
+    apply_adversarial_defence = defence == "adversarial"
     match model:
         case "KeystrokeDynamicsNNModel":
             return KeystrokeDynamicsNNModel(dataset, subject_id)
         case "LSTMModel":
-            return LSTMModel(dataset, subject_id)
+            return LSTMModel(dataset, subject_id, apply_adversarial_defence)
         case "CNNLSTMModel":
-            return CNNLSTMModel(dataset, subject_id)
+            return CNNLSTMModel(dataset, subject_id, apply_adversarial_defence)
 
 def __compute_class_weight(train, subject_id):
     positive_sum = sum([1 for sequence in train if sequence.subject_id == subject_id])
@@ -73,7 +74,7 @@ def train_model(model, subject_id, train, defence, epochs, seed):
 
     class_weight = __compute_class_weight(train, subject_id)
 
-    model = get_model(model, train, subject_id)
+    model = get_model(model, train, subject_id, defence)
     model.fit(epochs, class_weight=class_weight)
     return model
 
@@ -84,8 +85,8 @@ def set_random_seed(seed):
 
 def main():
     argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument("--attack", choices=["None", "impersonation"], required=False)
-    argument_parser.add_argument("--defence", choices=["None", "augmentation"], required=False)
+    argument_parser.add_argument("--attack", choices=["None", "impersonation", "adversarial"], required=False)
+    argument_parser.add_argument("--defence", choices=["None", "augmentation", "adversarial"], required=False)
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
     argument_parser.add_argument("--dataset", choices=["IKDD", "KeyRecs", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge", "KeystrokeDynamicsBenchmarkDataset"], required=True)

@@ -7,10 +7,10 @@ from .lstm_model import LSTMModel
 class Conv1DWithMasking(tensorflow.keras.layers.Conv1D): supports_masking = True
 
 class CNNLSTMModel(BaseBiometricModel):
-    def __init__(self, dataset, subject_id):
+    def __init__(self, dataset, subject_id, adversarial_training):
         layers = CNNLSTMModel.get_layers()
         layers += LSTMModel.get_layers()
-        super().__init__(layers, dataset, subject_id)
+        super().__init__(layers, dataset, subject_id, adversarial_training)
 
     @staticmethod
     def get_layers():

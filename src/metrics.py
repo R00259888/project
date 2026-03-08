@@ -1,11 +1,12 @@
 import bob.measure
 import numpy as np
 
-from .attacks import impersonation_attack
+from .attacks import impersonation_attack, adversarial_attack
 
 def get_metrics(model, test_dataset, subject_id, attack):
     if attack == "impersonation": test_dataset = impersonation_attack(test_dataset, subject_id)
     X, y_desired = model.prepare_features(test_dataset)
+    if attack == "adversarial": X = adversarial_attack(model, X, y_desired)
     confidence_score = model.predict(X).flatten()
 
     negatives = confidence_score[np.array(y_desired) == 0]

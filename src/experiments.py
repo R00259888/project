@@ -45,7 +45,9 @@ experiments = [
             {"attack": None, "defence": None},
             {"attack": None, "defence": "augmentation"},
             {"attack": "impersonation", "defence": None},
-            {"attack": "impersonation", "defence": "augmentation"}
+            {"attack": "impersonation", "defence": "augmentation"},
+            {"attack": "adversarial", "defence": None},
+            {"attack": "adversarial", "defence": "adversarial"}
         ]
     }
 ]
