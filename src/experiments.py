@@ -64,11 +64,11 @@ def __subject_id_sample(dataset, subject_count):
 
 def __save_experiment_outputs(name, rows):
     df = pd.DataFrame(rows)
-    tables_path = os.path.join("thesis", "Tables")
+    tables_path = os.path.join("report", "Tables")
     os.makedirs(tables_path, exist_ok=True)
     df.to_csv(os.path.join(tables_path, name + ".csv"), index=False, float_format="%.3f")
 
-    figures_path = os.path.join("thesis", "Figures")
+    figures_path = os.path.join("report", "Figures")
     os.makedirs(figures_path, exist_ok=True)
     metric_means = (df.groupby(["attack", "defence"], dropna=False)["eer"].mean().reset_index())
 

@@ -28,7 +28,7 @@ python3 -m src.experiments
 
 if [ -z "$COLAB_MODE" ]; then
     (
-        cd thesis
+        cd report
         latexmk -pdf Thesis.tex
         open Thesis.pdf
     )
