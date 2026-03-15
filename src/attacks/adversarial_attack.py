@@ -13,7 +13,7 @@ def adversarial_attack(model, X, y):
         X_perturbed = apply_fgsm_perturbation(model, X_batch, tf.ones_like(y_batch), padding_mask(X_batch), -1, False)
 
         not_subject = tf.equal(y_batch, 0.0) # Only apply to instances which are not the subject
-        not_subject = tf.reshape(not_subject, [-1, 1, 1])
+        not_subject = tf.reshape(not_subject, [-1] + [1] * (len(X_batch.shape) - 1))
         X_perturbations.append(tf.where(not_subject, X_perturbed, X_batch).numpy())
 
     return np.concatenate(X_perturbations, axis=0)

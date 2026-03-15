@@ -10,5 +10,6 @@
 *.pdf
 *.py[codz]
 *.toc
-/datasets/
+datasets/
+tests/
 __pycache__/

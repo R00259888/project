@@ -4,7 +4,9 @@ import numpy as np
 import tensorflow as tf
 
 from .defences import data_augmentation_defence
-from .dataset import load_ikdd_keystroke_dynamics_dataset, load_keyrecs_dataset, load_keystroke_dynamics_benchmark_dataset, load_minecraft_mouse_dynamics_dataset, load_mouse_dynamics_challenge_dataset
+from .dataset import load_ikdd_keystroke_dynamics_dataset, load_keyrecs_dataset
+from .dataset import load_keystroke_dynamics_benchmark_dataset, load_minecraft_mouse_dynamics_dataset
+from .dataset import load_mouse_dynamics_challenge_dataset, load_amalgamated_mouse_dynamics_dataset
 from .metrics import get_metrics
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.lstm_model import LSTMModel
@@ -23,6 +25,8 @@ def get_dataset(model):
             return load_mouse_dynamics_challenge_dataset()
         case "KeystrokeDynamicsBenchmarkDataset":
             return load_keystroke_dynamics_benchmark_dataset()
+        case "Amalgamated-Mouse-Dynamics":
+            return load_amalgamated_mouse_dynamics_dataset()
 
 def __train_test_split(dataset, train_perc=0.7):
     subjects = collections.defaultdict(list)
@@ -53,7 +57,7 @@ def get_model(model, dataset, subject_id, defence):
     apply_adversarial_defence = defence == "adversarial"
     match model:
         case "KeystrokeDynamicsNNModel":
-            return KeystrokeDynamicsNNModel(dataset, subject_id)
+            return KeystrokeDynamicsNNModel(dataset, subject_id, apply_adversarial_defence)
         case "LSTMModel":
             return LSTMModel(dataset, subject_id, apply_adversarial_defence)
         case "CNNLSTMModel":
@@ -84,12 +88,18 @@ def set_random_seed(seed):
     tf.random.set_seed(seed)
 
 def main():
+    dataset_choices = [
+        "IKDD", "KeyRecs", "Minecraft-Mouse-Dynamics-Dataset",
+        "Mouse-Dynamics-Challenge", "KeystrokeDynamicsBenchmarkDataset",
+        "Amalgamated-Mouse-Dynamics"
+    ]
+
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument("--attack", choices=["None", "impersonation", "adversarial"], required=False)
     argument_parser.add_argument("--defence", choices=["None", "augmentation", "adversarial"], required=False)
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
-    argument_parser.add_argument("--dataset", choices=["IKDD", "KeyRecs", "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge", "KeystrokeDynamicsBenchmarkDataset"], required=True)
+    argument_parser.add_argument("--dataset", choices=dataset_choices, required=True)
     argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "LSTMModel", "CNNLSTMModel"], required=True)
     argument_parser.add_argument("--seed", type=int, default=0)
     argument_parser.add_argument("--subject_id", type=int, required=True)

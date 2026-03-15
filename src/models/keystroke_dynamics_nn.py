@@ -4,8 +4,8 @@ import tensorflow.keras.layers
 from .base_biometric_model import BaseBiometricModel
 
 class KeystrokeDynamicsNNModel(BaseBiometricModel):
-    def __init__(self, dataset, subject_id):
-        super().__init__(KeystrokeDynamicsNNModel.get_layers(), dataset, subject_id)
+    def __init__(self, dataset, subject_id, adversarial_training):
+        super().__init__(KeystrokeDynamicsNNModel.get_layers(), dataset, subject_id, adversarial_training)
 
     @staticmethod
     def get_layers():

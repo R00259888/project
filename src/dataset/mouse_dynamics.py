@@ -89,3 +89,14 @@ def load_mouse_dynamics_challenge_dataset():
         _load_mouse_dynamics_challenge_dataset("training_files"),
         _load_mouse_dynamics_challenge_dataset("test_files"),
     )
+
+def load_amalgamated_mouse_dynamics_dataset():
+    train, test = load_mouse_dynamics_challenge_dataset()
+    minecraft_mouse_dynamics_dataset = load_minecraft_mouse_dynamics_dataset()
+
+    amalgamated_mouse_dynamics_dataset = list(train) + list(test)
+    minecraft_mouse_dynamics_dataset_offset = max([mouse_event_sequence.subject_id for mouse_event_sequence in amalgamated_mouse_dynamics_dataset]) + 1
+    for mouse_event_sequence in minecraft_mouse_dynamics_dataset:
+        mouse_event_sequence.subject_id += minecraft_mouse_dynamics_dataset_offset # Offsetting avoids label collisions
+
+    return amalgamated_mouse_dynamics_dataset + minecraft_mouse_dynamics_dataset

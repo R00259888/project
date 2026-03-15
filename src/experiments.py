@@ -6,49 +6,75 @@ import pandas as pd
 from .main import get_dataset, get_subject_ids, train_model, train_test_split
 from .metrics import get_metrics
 
+vector_variants = [
+    {"attack": None, "defence": None},
+    {"attack": "adversarial", "defence": None},
+    {"attack": "adversarial", "defence": "adversarial"}
+]
+
+time_series_variants = [
+    {"attack": None, "defence": None},
+    {"attack": None, "defence": "augmentation"},
+    {"attack": "impersonation", "defence": None},
+    {"attack": "impersonation", "defence": "augmentation"},
+    {"attack": "adversarial", "defence": None},
+    {"attack": "adversarial", "defence": "adversarial"}
+]
+
 experiments = [
     {
         "dataset": "IKDD",
         "model": "KeystrokeDynamicsNNModel",
         "subject_count": 3,
-        "variants": [{"attack": None, "defence": None}]
+        "variants": vector_variants
     },
     {
         "dataset": "KeystrokeDynamicsBenchmarkDataset",
         "model": "KeystrokeDynamicsNNModel",
         "subject_count": 3,
-        "variants": [{"attack": None, "defence": None}]
+        "variants": vector_variants
     },
     {
         "dataset": "KeyRecs",
         "model": "LSTMModel",
         "subject_count": 3,
-        "variants": [{"attack": None, "defence": None}]
+        "variants": vector_variants
     },
     {
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "LSTMModel",
         "subject_count": 3,
-        "variants": [{"attack": None, "defence": None}]
+        "variants": time_series_variants
     },
     {
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "CNNLSTMModel",
         "subject_count": 3,
-        "variants": [{"attack": None, "defence": None}]
+        "variants": time_series_variants
     },
     {
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "LSTMModel",
         "subject_count": 3,
-        "variants": [
-            {"attack": None, "defence": None},
-            {"attack": None, "defence": "augmentation"},
-            {"attack": "impersonation", "defence": None},
-            {"attack": "impersonation", "defence": "augmentation"},
-            {"attack": "adversarial", "defence": None},
-            {"attack": "adversarial", "defence": "adversarial"}
-        ]
+        "variants": time_series_variants
+    },
+    {
+        "dataset": "Mouse-Dynamics-Challenge",
+        "model": "CNNLSTMModel",
+        "subject_count": 3,
+        "variants": time_series_variants
+    },
+    {
+        "dataset": "Amalgamated-Mouse-Dynamics",
+        "model": "LSTMModel",
+        "subject_count": 3,
+        "variants": time_series_variants
+    },
+    {
+        "dataset": "Amalgamated-Mouse-Dynamics",
+        "model": "CNNLSTMModel",
+        "subject_count": 3,
+        "variants": time_series_variants
     }
 ]
 
