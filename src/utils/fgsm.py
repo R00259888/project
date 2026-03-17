@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 FGSM_EPSILON = float(1)
-FGSM_BATCH_SIZE = 64
+FGSM_BATCH_SIZE = 512
 
 def padding_mask(x):
     return tf.cast(tf.reduce_any(tf.not_equal(x, 0.0), axis=-1, keepdims=True), tf.float32)

@@ -35,7 +35,7 @@ def __train_test_split(dataset, train_perc=0.7):
 
     train_dataset, test_dataset = [], []
     for _, sequences in subjects.items():
-        dataset_split_index = int(len(sequences) * train_perc)
+        dataset_split_index = min(int(len(sequences) * train_perc), max(0, len(sequences) - 2))
         if dataset_split_index == 0:
             train_dataset.extend(sequences)
             test_dataset.extend(sequences)
@@ -45,9 +45,9 @@ def __train_test_split(dataset, train_perc=0.7):
 
     return train_dataset, test_dataset
 
-def train_test_split(dataset):
+def train_test_split(dataset, train_perc=0.7):
     if type(dataset) == tuple: return dataset # Already split
-    else: return __train_test_split(dataset)
+    else: return __train_test_split(dataset, train_perc)
 
 def get_subject_ids(dataset):
     if type(dataset) == tuple: dataset = dataset[0]
@@ -72,9 +72,8 @@ def __compute_class_weight(train, subject_id):
 
 def train_model(model, subject_id, train, defence, epochs, seed):
     set_random_seed(seed)
-    train = list(train)
 
-    if defence == "augmentation": train = data_augmentation_defence(train, subject_id)
+    if defence == "augmentation": train = data_augmentation_defence(list(train), subject_id)
 
     class_weight = __compute_class_weight(train, subject_id)
 

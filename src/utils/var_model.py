@@ -24,6 +24,7 @@ class VAR:
         return self
 
     def sample(self, delta_len):
+        if delta_len == 0: return np.empty((0, 2))
         delta_0 = self.__initial_deltas[np.random.randint(len(self.__initial_deltas))]
         deltas = [delta_0] # Generate using this seed
         for _ in range(delta_len - 1):

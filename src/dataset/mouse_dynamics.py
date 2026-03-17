@@ -1,4 +1,4 @@
-import dataclasses, os, zipfile
+import dataclasses, functools, os, zipfile
 
 import numpy as np
 import pandas as pd
@@ -16,46 +16,62 @@ class MouseEventSequence:
     CHUNK_SIZE = 128
 
     def __init__(self, data):
-        if isinstance(data, pd.DataFrame):
+        match data:
+            case pd.DataFrame():
+                self.data = data[["Timestamp", "X", "Y", "Button Pressed", "Subject ID"]].to_numpy()
+                self.subject_id = int(self.data[0, 4])
+            case np.ndarray():
+                self.data = data
+                self.subject_id = int(self.data[0, 4])
+            case _:
+                self.data = None
+                self.mouse_event_sequence = data
+                self.subject_id = data[0].subject_id
+
+    def __getattr__(self, name):
+        if name == 'mouse_event_sequence':
             self.mouse_event_sequence = [
                 MouseEvent(
-                    timestamp=int(mouse_event["Timestamp"]),
-                    x=int(mouse_event["X"]),
-                    y=int(mouse_event["Y"]),
-                    button_pressed=int(mouse_event["Button Pressed"]),
-                    subject_id=int(mouse_event["Subject ID"])
+                    timestamp=int(mouse_event[0]),
+                    x=int(mouse_event[1]),
+                    y=int(mouse_event[2]),
+                    button_pressed=int(mouse_event[3]),
+                    subject_id=int(mouse_event[4])
                 )
-                for _, mouse_event in data.iterrows()
+                for mouse_event in self.data
             ]
-        else:
-            self.mouse_event_sequence = data
-        self.subject_id = self.mouse_event_sequence[0].subject_id
+            return self.mouse_event_sequence
+        raise AttributeError(name) # Needed by deepcopy
 
     def __len__(self):
+        if self.data is not None: return len(self.data)
         return len(self.mouse_event_sequence)
 
     def __getitem__(self, key):
-        value = self.mouse_event_sequence[key]
-        if isinstance(key, slice): return MouseEventSequence(value)
-        return value
+        if isinstance(key, slice):
+            if self.data is not None: return MouseEventSequence(self.data[key])
+            return MouseEventSequence(self.mouse_event_sequence[key])
+        return self.mouse_event_sequence[key]
 
     def chunkify(self):
         return [self[i:i + self.CHUNK_SIZE] for i in range(0, len(self), self.CHUNK_SIZE)]
 
     def vectorise(self):
-        mouse_coordinate_deltas = []
-        for i in range(1, len(self.mouse_event_sequence)):
-            mouse_coordinate_deltas.append([
-                self.mouse_event_sequence[i - 1].x - self.mouse_event_sequence[i].x,
-                self.mouse_event_sequence[i - 1].y - self.mouse_event_sequence[i].y
-            ])
-        return np.array(mouse_coordinate_deltas, dtype=np.float32)
+        mouse_coordinates = self.data[:, 1:3].astype(np.float32)
+        return mouse_coordinates[:-1] - mouse_coordinates[1:]
+
+    def replace_mouse_event_sequence(self, deltas):
+        data = self.data.copy()
+        data[1:, 1] = np.round(data[0, 1] - np.cumsum(deltas[:, 0])).astype(data.dtype)
+        data[1:, 2] = np.round(data[0, 2] - np.cumsum(deltas[:, 1])).astype(data.dtype)
+        return MouseEventSequence(data)
 
 def chunkify_dataset(dataset):
     chunks = []
     for mouse_event_sequence in dataset: chunks.extend(mouse_event_sequence.chunkify())
     return chunks
 
+@functools.lru_cache(maxsize=None)
 def load_minecraft_mouse_dynamics_dataset():
     dataset = []
 
@@ -76,7 +92,7 @@ def _load_mouse_dynamics_challenge_dataset(dataset_path):
         subject_path = os.path.join(dataset_path, file_name)
 
         for csv_file in os.listdir(subject_path):
-            df = pd.read_csv(os.path.join(subject_path, csv_file))
+            df = pd.read_csv(os.path.join(subject_path, csv_file), usecols=["client timestamp", "x", "y", "button"])
             df = df.rename(columns={"client timestamp": "Timestamp", "x": "X", "y": "Y"})
             df["Button Pressed"] = (df["button"] != "NoButton").astype(int)
             df["Subject ID"] = int(file_name.lstrip("user"))
@@ -84,6 +100,7 @@ def _load_mouse_dynamics_challenge_dataset(dataset_path):
 
     return chunkify_dataset(dataset)
 
+@functools.lru_cache(maxsize=None)
 def load_mouse_dynamics_challenge_dataset():
     return (
         _load_mouse_dynamics_challenge_dataset("training_files"),
