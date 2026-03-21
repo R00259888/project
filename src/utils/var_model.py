@@ -3,6 +3,7 @@ import numpy as np
 class VAR:
     def fit(self, mouse_event_sequences):
         deltas = [mouse_event_sequence.vectorise() for mouse_event_sequence in mouse_event_sequences]
+        deltas = [*filter(lambda delta: len(delta) > 0, deltas)]
 
         self.__initial_deltas = np.array([delta[0] for delta in deltas])
         deltas = np.vstack(deltas) # Stack sequences into matrix
