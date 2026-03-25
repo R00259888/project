@@ -1,5 +1,6 @@
 import functools, os, random
 
+import matplotlib.patches
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -7,18 +8,23 @@ from .main import get_dataset, get_subject_ids, train_model, train_test_split
 from .metrics import get_metrics
 
 vector_variants = [
-    {"attack": None, "defence": None},
-    {"attack": "adversarial", "defence": None},
-    {"attack": "adversarial", "defence": "adversarial"}
+    {"attack": None, "defence": None, "colour": "red"},
+
+    {"attack": "adversarial", "defence": None, "colour": "blue"},
+    {"attack": "adversarial", "defence": "adversarial", "colour": "blue"}
 ]
 
 time_series_variants = [
-    {"attack": None, "defence": None},
-    {"attack": None, "defence": "augmentation"},
-    {"attack": "impersonation", "defence": None},
-    {"attack": "impersonation", "defence": "augmentation"},
-    {"attack": "adversarial", "defence": None},
-    {"attack": "adversarial", "defence": "adversarial"}
+    {"attack": None, "defence": None, "colour": "red"},
+
+    {"attack": "impersonation", "defence": None, "colour": "green"},
+    {"attack": "impersonation", "defence": "augmentation", "colour": "green"},
+    {"attack": "impersonation", "defence": "adversarial", "colour": "green"},
+
+    {"attack": "adversarial", "defence": None, "colour": "blue"},
+    {"attack": "adversarial", "defence": "adversarial", "colour": "blue"},
+    {"attack": "adversarial", "defence": "augmentation", "colour": "blue"}
+
 ]
 
 experiments = [
@@ -85,6 +91,12 @@ experiments = [
     }
 ]
 
+experiment_legend_handles = [
+    matplotlib.patches.Patch(color="red", label="No attack"),
+    matplotlib.patches.Patch(color="green", label="Impersonation attack"),
+    matplotlib.patches.Patch(color="blue", label="Adversarial attack")
+]
+
 @functools.cache
 def __subject_ids(dataset):
     return get_subject_ids(get_dataset(dataset))
@@ -111,19 +123,21 @@ def __save_experiment_outputs(name, rows, subject_count, train_perc):
 
     figures_path = os.path.join("report", "Figures")
     os.makedirs(figures_path, exist_ok=True)
-    metric_means = (df.groupby(["attack", "defence"], dropna=False)["eer"].mean().reset_index())
+    metric_means = (df.groupby(["attack", "defence", "colour"], dropna=False)["eer"].mean().reset_index())
 
-    x_labels = []
+    x_labels, colours = [], []
     for _, row in metric_means.iterrows():
         x_labels.append(f"{row['attack']} vs {row['defence']}")
+        colours.append(row["colour"])
 
     _, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.bar(x_labels, metric_means["eer"], width=0.5)
+    bars = ax.bar(x_labels, metric_means["eer"], width=0.5, color=colours)
     ax.bar_label(bars, fmt="%.3f", padding=3)
-    ax.set_xlabel("Variant")
+    ax.set_xlabel("Variant (attack vs defence)")
     ax.set_ylabel("Mean EER")
     ax.set_title(f"{name}: {subject_count} subjects, {__split_label(train_perc)} split")
     ax.set_ylim(0, 1.25)
+    ax.legend(handles=experiment_legend_handles)
     plt.xticks(rotation=15, ha="right")
     plt.tight_layout()
     plt.savefig(os.path.join(figures_path, name + ".png"))
@@ -159,6 +173,7 @@ def main():
                         "model": model,
                         "attack": variant["attack"] or "None",
                         "defence": variant["defence"] or "None",
+                        "colour": variant.get("colour") or "red",
                         "subject_id": subject_id,
                         **metrics
                     })
