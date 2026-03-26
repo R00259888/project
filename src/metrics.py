@@ -1,5 +1,6 @@
 import bob.measure
 import numpy as np
+import sklearn.metrics
 
 from .attacks import impersonation_attack, adversarial_attack
 
@@ -8,13 +9,21 @@ def get_metrics(model, test_dataset, subject_id, attack):
     X, y_desired = model.prepare_features(test_dataset)
     if attack == "adversarial": X = adversarial_attack(model, X, y_desired)
     confidence_score = model.predict(X).flatten()
+    y_true = np.array(y_desired)
 
-    negatives = confidence_score[np.array(y_desired) == 0]
-    positives = confidence_score[np.array(y_desired) == 1]
+    negatives = confidence_score[y_true == 0]
+    positives = confidence_score[y_true == 1]
 
     eer, far, frr, auc = float("nan"), float("nan"), float("nan"), float("nan")
+    accuracy, precision, recall = float("nan"), float("nan"), float("nan")
 
     if not np.isnan(confidence_score).any():
+        if len(y_true) > 0:
+            y_pred = confidence_score >= 0.5
+            accuracy = sklearn.metrics.accuracy_score(y_true, y_pred)
+            precision = sklearn.metrics.precision_score(y_true, y_pred, zero_division=0)
+            recall = sklearn.metrics.recall_score(y_true, y_pred, zero_division=0)
+
         if len(negatives) > 0 and len(positives) > 0:
             eer_threshold = bob.measure.eer_threshold(negatives, positives)
             far, frr = bob.measure.farfrr(negatives, positives, eer_threshold)
@@ -24,4 +33,7 @@ def get_metrics(model, test_dataset, subject_id, attack):
             curve = bob.measure.roc(negatives, positives, n_points=1000)
             auc = float(np.trapz(np.flip(1 - curve[1]), np.flip(curve[0])))
 
-    return {"eer": eer, "far": far, "frr": frr, "auc": auc}
+    return {
+        "eer": eer, "far": far, "frr": frr, "auc": auc,
+        "accuracy": accuracy, "precision": precision, "recall": recall
+    }
