@@ -2,6 +2,7 @@ import functools, os, random
 
 import matplotlib.patches
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from .main import get_dataset, get_subject_ids, train_model, train_test_split
@@ -33,61 +34,73 @@ experiments = [
         "model": "KeystrokeDynamicsNNModel",
         "subject_count": 3,
         "train_percs": [0.7, 0.8],
-        "variants": vector_variants
+        "variants": vector_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
+        # https://doi.org/10.1109/DICCT64131.2025.10986481
         "dataset": "KeystrokeDynamicsBenchmarkDataset",
         "model": "KeystrokeDynamicsNNModel",
         "subject_count": 3,
         "train_percs": [0.7, 0.8],
-        "variants": vector_variants
+        "variants": vector_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "KeyRecs",
         "model": "LSTMModel",
         "subject_count": 3,
         "train_percs": [0.7, 0.8],
-        "variants": vector_variants
+        "variants": vector_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
+        # https://doi.org/10.1109/ICECET52533.2021.9698532
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "LSTMModel",
         "subject_count": 3,
         "train_percs": [0.7],
-        "variants": time_series_variants
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "CNNLSTMModel",
         "subject_count": 3,
         "train_percs": [0.7],
-        "variants": time_series_variants
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
+        # https://doi.org/10.48550/arXiv.2504.21415
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "LSTMModel",
         "subject_count": 3,
-        "variants": time_series_variants
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "CNNLSTMModel",
         "subject_count": 3,
-        "variants": time_series_variants
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "LSTMModel",
         "subject_count": 3,
         "train_percs": [0.7],
-        "variants": time_series_variants
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "CNNLSTMModel",
         "subject_count": 3,
         "train_percs": [0.7],
-        "variants": time_series_variants
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
     }
 ]
 
@@ -114,7 +127,7 @@ def __split_label(train_perc):
 def __figure_path(name, train_perc):
     return os.path.join("report", "Figures", f"{name}_{__split_label(train_perc)}.png")
 
-def __save_experiment_outputs(name, rows, subject_count, train_perc):
+def __save_experiment_outputs(name, rows, subject_count, train_perc, plot_metrics):
     name = f"{name}_{__split_label(train_perc)}"
     df = pd.DataFrame(rows)
     tables_path = os.path.join("report", "Tables")
@@ -123,20 +136,28 @@ def __save_experiment_outputs(name, rows, subject_count, train_perc):
 
     figures_path = os.path.join("report", "Figures")
     os.makedirs(figures_path, exist_ok=True)
-    metric_means = (df.groupby(["attack", "defence", "colour"], dropna=False)["eer"].mean().reset_index())
+    metric_means = df.groupby(["attack", "defence", "colour"], dropna=False)[plot_metrics].mean().reset_index()
 
     x_labels, colours = [], []
     for _, row in metric_means.iterrows():
         x_labels.append(f"{row['attack']} vs {row['defence']}")
         colours.append(row["colour"])
 
+    bar_width, bar_spacing = 0.7 / len(plot_metrics), 1.5 / len(plot_metrics)
+    bar_positions = np.arange(len(x_labels)) * 1.8
     _, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.bar(x_labels, metric_means["eer"], width=0.5, color=colours)
-    ax.bar_label(bars, fmt="%.3f", padding=3)
+    for i, metric in enumerate(plot_metrics):
+        bars = ax.bar(bar_positions + (i - (len(plot_metrics) - 1) / 2) * bar_spacing, metric_means[metric], width=bar_width, color=colours)
+        labels = []
+        for mean in metric_means[metric]:
+            labels.append(f"{metric[:3].upper()}\n{mean:.3f}")
+        ax.bar_label(bars, labels=labels, padding=3, fontsize=6)
+    ax.set_xticks(bar_positions)
+    ax.set_xticklabels(x_labels)
     ax.set_xlabel("Variant (attack vs defence)")
-    ax.set_ylabel("Mean EER")
-    ax.set_title(f"{name}: {subject_count} subjects, {__split_label(train_perc)} split")
-    ax.set_ylim(0, 1.25)
+    ax.set_ylabel("Mean metric value")
+    ax.set_title(f"{name}: {subject_count} subjects")
+    ax.set_ylim(0, 1.35)
     ax.legend(handles=experiment_legend_handles)
     plt.xticks(rotation=15, ha="right")
     plt.tight_layout()
@@ -178,7 +199,7 @@ def main():
                         **metrics
                     })
 
-            __save_experiment_outputs(name, experiment_rows, subject_count, train_perc)
+            __save_experiment_outputs(name, experiment_rows, subject_count, train_perc, experiment["plot_metrics"])
 
 if __name__ == "__main__":
     main()
