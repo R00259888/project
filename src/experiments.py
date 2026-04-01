@@ -7,6 +7,7 @@ import pandas as pd
 
 from .main import get_dataset, get_subject_ids, train_model, train_test_split
 from .metrics import get_metrics
+from . import comparison_table
 
 vector_variants = [
     {"attack": None, "defence": None, "colour": "red"},
@@ -200,6 +201,8 @@ def main():
                     })
 
             __save_experiment_outputs(name, experiment_rows, subject_count, train_perc, experiment["plot_metrics"])
+
+    comparison_table.main()
 
 if __name__ == "__main__":
     main()
