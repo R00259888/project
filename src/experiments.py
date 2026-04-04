@@ -33,8 +33,9 @@ experiments = [
     {
         "dataset": "IKDD",
         "model": "KeystrokeDynamicsNNModel",
-        "subject_count": 3,
+        "subject_count": 5,
         "train_percs": [0.7, 0.8],
+        "epochs": 50, # Kamra et al. "Fig. 6: Loss Curve"
         "variants": vector_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
@@ -42,16 +43,18 @@ experiments = [
         # https://doi.org/10.1109/DICCT64131.2025.10986481
         "dataset": "KeystrokeDynamicsBenchmarkDataset",
         "model": "KeystrokeDynamicsNNModel",
-        "subject_count": 3,
+        "subject_count": 5,
         "train_percs": [0.7, 0.8],
+        "epochs": 50,
         "variants": vector_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "KeyRecs",
         "model": "LSTMModel",
-        "subject_count": 3,
+        "subject_count": 5,
         "train_percs": [0.7, 0.8],
+        "epochs": 50,
         "variants": vector_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
@@ -59,16 +62,18 @@ experiments = [
         # https://doi.org/10.1109/ICECET52533.2021.9698532
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "LSTMModel",
-        "subject_count": 3,
-        "train_percs": [0.7],
+        "subject_count": 5,
+        "train_percs": [0.7, 0.8],
+        "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "CNNLSTMModel",
-        "subject_count": 3,
-        "train_percs": [0.7],
+        "subject_count": 5,
+        "train_percs": [0.7, 0.8],
+        "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
@@ -76,22 +81,25 @@ experiments = [
         # https://doi.org/10.48550/arXiv.2504.21415
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "LSTMModel",
-        "subject_count": 3,
+        "subject_count": 5,
+        "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "CNNLSTMModel",
-        "subject_count": 3,
+        "subject_count": 5,
+        "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "LSTMModel",
-        "subject_count": 3,
+        "subject_count": 5,
         "train_percs": [0.7],
+        "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     },
@@ -165,12 +173,12 @@ def __save_experiment_outputs(name, rows, subject_count, train_perc, plot_metric
     plt.savefig(os.path.join(figures_path, name + ".png"))
     plt.close()
 
-def __run_variant(dataset, model, attack, defence, subject_ids, train_perc):
+def __run_variant(dataset, model, attack, defence, subject_ids, train_perc, epochs):
     train, test = train_test_split(get_dataset(dataset), train_perc)
     metrics = []
     for subject_id in subject_ids:
         print(f"{dataset}-{model} {__split_label(train_perc)} attack={attack} defence={defence} subject={subject_id}", flush=True)
-        trained_model = train_model(model, subject_id, train, defence, 20, 0)
+        trained_model = train_model(model, subject_id, train, defence, epochs, 0)
         metrics.append((subject_id, get_metrics(trained_model, test, subject_id, attack)))
     return metrics
 
@@ -182,6 +190,7 @@ def main():
 
         name = dataset + "_" + model
         subject_count = experiment["subject_count"]
+        epochs = experiment["epochs"]
         if subject_count == 0: continue # Skip early
         subject_ids = __subject_id_sample(dataset, subject_count)
 
@@ -189,7 +198,7 @@ def main():
             if os.path.exists(__figure_path(name, train_perc)): continue # Continue where we left off, in case Colab cuts off
             experiment_rows = []
             for variant in experiment["variants"]:
-                for subject_id, metrics in __run_variant(dataset, model, variant["attack"], variant["defence"], subject_ids, train_perc):
+                for subject_id, metrics in __run_variant(dataset, model, variant["attack"], variant["defence"], subject_ids, train_perc, epochs):
                     experiment_rows.append({
                         "dataset": dataset,
                         "model": model,
