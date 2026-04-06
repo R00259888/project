@@ -106,8 +106,18 @@ experiments = [
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "CNNLSTMModel",
-        "subject_count": 3,
+        "subject_count": 5,
         "train_percs": [0.7],
+        "epochs": 50,
+        "variants": time_series_variants,
+        "plot_metrics": ["eer", "auc", "accuracy"]
+    },
+    {
+        "dataset": "Amalgamated-Mouse-Dynamics",
+        "model": "BlendedLSTMModel",
+        "subject_count": 5,
+        "train_percs": [0.7],
+        "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
     }
@@ -211,7 +221,8 @@ def main():
 
             __save_experiment_outputs(name, experiment_rows, subject_count, train_perc, experiment["plot_metrics"])
 
-    comparison_table.main()
+    comparison_table.comparison_table()
+    overview_chart.overview_chart()
 
 if __name__ == "__main__":
     main()

@@ -11,6 +11,7 @@ from .metrics import get_metrics
 from .models.keystroke_dynamics_nn import KeystrokeDynamicsNNModel
 from .models.lstm_model import LSTMModel
 from .models.cnn_lstm_model import CNNLSTMModel
+from .models.blended_lstm_model import BlendedLSTMModel
 
 @functools.lru_cache(maxsize=None)
 def get_dataset(model):
@@ -62,6 +63,8 @@ def get_model(model, dataset, subject_id, defence):
             return LSTMModel(dataset, subject_id, apply_adversarial_defence)
         case "CNNLSTMModel":
             return CNNLSTMModel(dataset, subject_id, apply_adversarial_defence)
+        case "BlendedLSTMModel":
+            return BlendedLSTMModel(dataset, subject_id, apply_adversarial_defence)
 
 def __compute_class_weight(train, subject_id):
     positive_sum = sum([1 for sequence in train if sequence.subject_id == subject_id])
@@ -99,7 +102,7 @@ def main():
     argument_parser.add_argument("--epochs", type=int, default=10)
     argument_parser.add_argument("--evaluation_plot", type=str, required=False)
     argument_parser.add_argument("--dataset", choices=dataset_choices, required=True)
-    argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "LSTMModel", "CNNLSTMModel"], required=True)
+    argument_parser.add_argument("--model", choices=["KeystrokeDynamicsNNModel", "LSTMModel", "CNNLSTMModel", "BlendedLSTMModel"], required=True)
     argument_parser.add_argument("--seed", type=int, default=0)
     argument_parser.add_argument("--subject_id", type=int, required=True)
 

@@ -1,115 +1,124 @@
-import collections, csv, os
+import os
 
-dataset_names = [
-    "KeystrokeDynamicsBenchmarkDataset", "IKDD", "KeyRecs",
-    "Minecraft-Mouse-Dynamics-Dataset", "Mouse-Dynamics-Challenge",
-    "Amalgamated-Mouse-Dynamics"
-]
+import pandas as pd
 
-# (dataset, model, doi, split, eer, auc, acc)
-data_from_literature = [
-    ("KeystrokeDynamicsBenchmarkDataset", "CNN-LSTM", "\\cite{https://doi.org/10.1109/DICCT64131.2025.10986481}", "80:20", None, 0.960, 0.990),
-    # "TABLE I: Proposed Model Result Metrics"
-
-    ("KeyRecs", "KNN", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.270, None, 0.672),
-    ("KeyRecs", "RF", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.270, None, 0.806),
-    ("KeyRecs", "LGBM", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.200, None, 0.811),
-    # "Table 3 Evaluation results for KNN, RF, and LGBM"
-    # "Table 4 Mean values for KNN, RF, and LGBM"
-
-    ("Minecraft-Mouse-Dynamics-Dataset", "RF (Scenario A)", "\\cite{https://doi.org/10.1109/ICECET52533.2021.9698532}", "70:30", 0.001, None, 0.927),
-    ("Minecraft-Mouse-Dynamics-Dataset", "RF (Scenario B)", "\\cite{https://doi.org/10.1109/ICECET52533.2021.9698532}", "70:30", 0.396, None, 0.616),
-    # TABLE I and II
-
-    ("Mouse-Dynamics-Challenge", "LSTM", "\\cite{https://doi.org/10.48550/arXiv.2504.21415}", "pre-split", 0.0614, 0.9773, None)
-    # "TABLE III: User-Averaged Models Performance Comparison on Balabit Dataset"
-]
+from . import experiment_results
 
 def __format_eer(eer):
-    if eer is None: return "-"
-    return f"{eer * 100:.1f}\\%" # Convert to percentage of error
+    if pd.isna(eer): return "-"
+    return f"{float(eer) * 100:.1f}\\%" # Convert to percentage of error
 
 def __format_auc(auc):
-    if auc is None: return "-"
-    return f"{auc:.3f}"
+    if pd.isna(auc): return "-"
+    return f"{float(auc):.3f}"
 
 def __format_acc(acc):
-    if acc is None: return "-"
-    return f"{acc * 100:.1f}\\%"
+    if pd.isna(acc): return "-"
+    return f"{float(acc) * 100:.1f}\\%"
 
-def __read_experiment_results():
-    tables_dir = os.path.join("report", "Tables")
-    rows = collections.defaultdict(list)
+def __format_delta_acc(delta):
+    if pd.isna(delta): return "-"
+    sign = ""
+    if delta >= 0: sign = "+"
+    return f"{sign}{float(delta) * 100:.1f}\\%"
 
-    for file_name in sorted(os.listdir(tables_dir)):
-        if not file_name.endswith(".csv"): continue
+def __sort_frame(dataframe):
+    dataset_names = list(experiment_results.dataset_names)
+    for dataset in dataframe["dataset"].unique():
+        if dataset not in dataset_names: dataset_names.append(dataset)
 
-        split = file_name.removesuffix(".csv").rsplit("_", 1)[-1]
-        with open(os.path.join(tables_dir, file_name), newline="") as csv_file:
-            for row in csv.DictReader(csv_file):
-                # Capture the baseline metrics
-                if row["attack"] == "None" and row["defence"] == "None":
-                    rows[row["dataset"], row["model"], split].append((float(row["eer"]), float(row["auc"]), float(row["accuracy"])))
-    experiment_results = {}
-    for dataset_model, entries in rows.items():
-        # Accumulate the metrics, and gen means
-        mean_eer = sum(map(lambda entry: entry[0], entries)) / len(entries)
-        mean_auc = sum(map(lambda entry: entry[1], entries)) / len(entries)
-        mean_acc = sum(map(lambda entry: entry[2], entries)) / len(entries)
-        experiment_results[dataset_model] = (mean_eer, mean_auc, mean_acc)
-    return experiment_results
+    dataframe["dataset"] = pd.Categorical(dataframe["dataset"], categories=dataset_names, ordered=True)
+    return dataframe.sort_values(["dataset", "source_order"]).copy()
 
-def main():
-    experiment_results = __read_experiment_results()
+def __build_baseline_table_dataframe():
+    literature_dataframe = experiment_results.read_literature_dataframe()
+    literature_dataframe["source_order"] = 0
 
-    experiment_results_table = collections.defaultdict(list)
-    for (dataset, model, split), (mean_eer, mean_auc, mean_acc) in experiment_results.items():
-        experiment_results_table[dataset].append((split, model, mean_eer, mean_auc, mean_acc))
+    project_dataframe = experiment_results.read_baseline_dataframe().copy()
+    project_dataframe["model"] = project_dataframe["model"].map(lambda model_name: f"\\texttt{{{model_name}}}")
+    project_dataframe["source"] = "This project"
+    project_dataframe["source_order"] = 1
 
-    data_from_literature_table = collections.defaultdict(list)
-    for (dataset, model, doi, split, eer, auc, acc) in data_from_literature:
-        data_from_literature_table[dataset].append((model, doi, split, eer, auc, acc))
+    project_columns = ["dataset", "model", "source", "split", "eer", "auc", "accuracy", "source_order"]
+    table_dataframe = pd.concat([literature_dataframe, project_dataframe[project_columns]], ignore_index=True)
+    table_dataframe = __sort_frame(table_dataframe)
 
-    dataset_groupings = []
-    for dataset in dataset_names:
-        rows = []
-        for (model, doi, split, eer, auc, acc) in data_from_literature_table.get(dataset, []):
-            rows.append((model, doi, split, eer, auc, acc))
+    table_dataframe["EER"] = table_dataframe["eer"].map(__format_eer)
+    table_dataframe["AUC"] = table_dataframe["auc"].map(__format_auc)
+    table_dataframe["ACC"] = table_dataframe["accuracy"].map(__format_acc)
 
-        for (split, model, mean_eer, mean_auc, mean_acc) in sorted(experiment_results_table.get(dataset, []), key=lambda row: (row[0], row[1])):
-            rows.append(("\\texttt{" + model + "}", "This project", split, mean_eer, mean_auc, mean_acc))
+    return table_dataframe[["dataset", "model", "source", "split", "EER", "AUC", "ACC"]]
 
-        if rows: dataset_groupings.append((dataset, rows))
+def __build_fgsm_table_dataframe():
+    literature_dataframe = experiment_results.read_fgsm_literature_dataframe()
+    literature_dataframe["source_order"] = 0
 
-    comparision_table = [
+    fgsm_dataframe = experiment_results.read_fgsm_dataframe().copy()
+    baseline_source_dataframe = experiment_results.read_baseline_dataframe()
+    baseline_columns = ["dataset", "model", "split", "accuracy"]
+    baseline_accuracy_dataframe = baseline_source_dataframe[baseline_columns]
+    baseline_dataframe = baseline_accuracy_dataframe.rename(columns={"accuracy": "baseline_acc"})
+
+    fgsm_dataframe = fgsm_dataframe.merge(baseline_dataframe, on=["dataset", "model", "split"], how="left")
+    fgsm_dataframe["model"] = fgsm_dataframe["model"].map(lambda model_name: f"\\texttt{{{model_name}}}")
+    fgsm_dataframe["source"] = "This project"
+    fgsm_dataframe["source_order"] = 1
+
+    fgsm_columns = ["dataset", "model", "source", "split", "accuracy", "baseline_acc", "source_order"]
+    table_dataframe = pd.concat([literature_dataframe, fgsm_dataframe[fgsm_columns]], ignore_index=True)
+    table_dataframe = __sort_frame(table_dataframe)
+
+    table_dataframe["ACC"] = table_dataframe["baseline_acc"].map(__format_acc)
+    table_dataframe["Post-FGSM ACC"] = table_dataframe["accuracy"].map(__format_acc)
+    table_dataframe["$\\Delta$ ACC"] = (table_dataframe["accuracy"] - table_dataframe["baseline_acc"]).map(__format_delta_acc)
+
+    return table_dataframe[["dataset", "model", "source", "split", "ACC", "Post-FGSM ACC", "$\\Delta$ ACC"]]
+
+def __insert_dataset_midrules(tabular, datasets):
+    table_lines = tabular.splitlines()
+    header_midrule_index = table_lines.index("\\midrule")
+    bottomrule_index = table_lines.index("\\bottomrule")
+    table_body_lines = table_lines[header_midrule_index + 1: bottomrule_index]
+
+    lines_with_midrule_added = []
+    previous_dataset = None
+    for row_index, row_line in enumerate(table_body_lines):
+        current_dataset = datasets.iloc[row_index]
+        if row_index > 0 and current_dataset != previous_dataset:lines_with_midrule_added.append("\\midrule")
+        lines_with_midrule_added.append(row_line)
+        previous_dataset = current_dataset
+
+    table_lines[header_midrule_index + 1:bottomrule_index] =  lines_with_midrule_added
+    return "\n".join(table_lines)
+
+def __write_comparison_table(dataframe, filename, caption, label):
+    display_headers = ["Dataset", "Model", "Source", "Split", *dataframe.columns[4:]] #Extract everything after first 4 cols
+    latex_tabular = dataframe.to_latex(index=False, escape=False, column_format="l l l l  r r r", header=display_headers)
+    latex_tabular = __insert_dataset_midrules(latex_tabular, dataframe["dataset"])
+
+    table_lines = [
         "\\begin{table}[H]",
         "\\centering",
-        "\\caption{Comparing baseline model performance to the literature (no attack/defence)}",
-        "\\label{tab:literaturecomparison}",
+        f"\\caption{{{caption}}}",
+        f"\\label{{{label}}}",
         "\\resizebox{\\linewidth}{!}{%",
-        "\\begin{tabular}{l l l l r r r}",
-        "\\toprule",
-        "\\textbf{Dataset} & \\textbf{Model} & \\textbf{Source} & \\textbf{Split} & \\textbf{EER} & \\textbf{AUC} & \\textbf{ACC} \\\\",
-        "\\midrule",
+        latex_tabular.rstrip(),
+        "}",
+        "\\end{table}",
+        "",
     ]
 
-    for grouping_index, (dataset, rows) in enumerate(dataset_groupings):
-        for row_index, (model, doi, split, eer, auc, acc) in enumerate(rows):
-            if row_index == 0: __dataset = dataset
-            else: __dataset = ""
+    with open(os.path.join("report", "Tables", filename), "w") as tex_file:
+        tex_file.write("\n".join(table_lines))
 
-            if row_index == len(rows) - 1: end_of_line = "\\\\[4pt]"
-            else: end_of_line = "\\\\"
+def comparison_table():
+    __write_comparison_table(__build_baseline_table_dataframe(), "comparison_table.tex", \
+        "Compare the baseline model performance against the literature (without attack/defence)", "tab:literaturecomparison")
+    __write_comparison_table(__build_fgsm_table_dataframe(), "fgsm_comparison_table.tex", \
+        "Compare the post-FGSM model performance against the literature", "tab:fgsmcomparison")
 
-            comparision_table.append(f"{__dataset} & {model} & {doi} & {split} & {__format_eer(eer)} & {__format_auc(auc)} & {__format_acc(acc)} {end_of_line}")
-
-        if grouping_index == len(dataset_groupings) - 1: comparision_table.append("\\bottomrule")
-        else: comparision_table.append("\\midrule")
-
-    output_file = os.path.join("report", "Tables", "comparison_table.tex")
-
-    comparision_table += ["\\end{tabular}%", "}", "\\end{table}", ""]
-    with open(output_file, "w") as csv_file: csv_file.write("\n".join(comparision_table))
+def main():
+    comparison_table()
 
 if __name__ == "__main__":
     main()
