@@ -26,7 +26,7 @@ fi
 
 python3 -m src.experiments
 
-if [ -z "$COLAB_MODE" ]; then
+if [ -z "$COLAB_MODE" ] && [ -f "report/Thesis.tex" ]; then
     (
         cd report
         latexmk -pdf Thesis.tex
