@@ -7,7 +7,7 @@ import pandas as pd
 
 from .main import get_dataset, get_subject_ids, train_model, train_test_split
 from .metrics import get_metrics
-from . import comparison_table
+from . import adversarial_summary_chart, comparison_table
 
 vector_variants = [
     {"attack": None, "defence": None, "colour": "red"},
@@ -146,6 +146,19 @@ def __split_label(train_perc):
 def __figure_path(name, train_perc):
     return os.path.join("report", "Figures", f"{name}_{__split_label(train_perc)}.png")
 
+def __variant_cache_filename(name, train_perc, attack, defence):
+    cache_path = os.path.join("cache")
+    os.makedirs(cache_path, exist_ok=True)
+    attack_label, defence_label = (attack or "None"), (defence or "None")
+    return os.path.join(cache_path, f"{name}_{__split_label(train_perc)}_{attack_label}_{defence_label}.csv")
+
+def __lookup_variant_cache(cache_file):
+    if not os.path.exists(cache_file): return None
+    return pd.read_csv(cache_file, keep_default_na=False).to_dict(orient="records")
+
+def __save_variant_cache(cache_file, variant_rows):
+    pd.DataFrame(variant_rows).to_csv(cache_file, index=False, float_format="%.3f")
+
 def __save_experiment_outputs(name, rows, subject_count, train_perc, plot_metrics):
     name = f"{name}_{__split_label(train_perc)}"
     df = pd.DataFrame(rows)
@@ -208,21 +221,30 @@ def main():
             if os.path.exists(__figure_path(name, train_perc)): continue # Continue where we left off, in case Colab cuts off
             experiment_rows = []
             for variant in experiment["variants"]:
-                for subject_id, metrics in __run_variant(dataset, model, variant["attack"], variant["defence"], subject_ids, train_perc, epochs):
-                    experiment_rows.append({
-                        "dataset": dataset,
-                        "model": model,
-                        "attack": variant["attack"] or "None",
-                        "defence": variant["defence"] or "None",
-                        "colour": variant.get("colour") or "red",
-                        "subject_id": subject_id,
-                        **metrics
-                    })
+                attack = variant["attack"]
+                defence = variant["defence"]
+                cache_file = __variant_cache_filename(name, train_perc, attack, defence)
+                variant_rows = __lookup_variant_cache(cache_file)
+                if variant_rows is None:
+                    variant_rows = []
+                    for subject_id, metrics in __run_variant(dataset, model, attack, defence, subject_ids, train_perc, epochs):
+                        variant_rows.append({
+                            "dataset": dataset,
+                            "model": model,
+                            "attack": attack or "None",
+                            "defence": defence or "None",
+                            "colour": variant.get("colour") or "red",
+                            "subject_id": subject_id,
+                            **metrics
+                        })
+                    __save_variant_cache(cache_file, variant_rows)
+
+                experiment_rows.extend(variant_rows)
 
             __save_experiment_outputs(name, experiment_rows, subject_count, train_perc, experiment["plot_metrics"])
 
     comparison_table.comparison_table()
-    overview_chart.overview_chart()
+    adversarial_summary_chart.adversarial_summary_chart()
 
 if __name__ == "__main__":
     main()

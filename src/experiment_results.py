@@ -15,6 +15,11 @@ def read_all():
     for path in sorted(glob.glob(os.path.join("report", "Tables", "*.csv"))):
         split = os.path.basename(path).removesuffix(".csv").rsplit("_", 1)[-1]
         dataframe = pd.read_csv(path, keep_default_na=False)
+        for metric in ["eer", "far", "frr", "auc", "accuracy", "precision", "recall"]:
+            if metric in dataframe.columns: dataframe[metric] = pd.to_numeric(dataframe[metric], errors="coerce")
+        for column in ["attack", "defence"]:
+            if column in dataframe.columns:
+                dataframe[column] = dataframe[column].replace("", "None")
         dataframe["split"] = split
         dataframes.append(dataframe)
 

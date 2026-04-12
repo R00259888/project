@@ -11,6 +11,12 @@ class BlendedLSTMModel:
     def prepare_features(self, dataset):
         return self.lstm.prepare_features(dataset)
 
+    def __call__(self, X, training=False):
+        return (self.cnn_lstm(X, training=training) + self.lstm(X, training=training)) / 2
+
+    def compute_loss(self, y, y_pred):
+        return self.lstm.compute_loss(y=y, y_pred=y_pred)
+
     def predict(self, X):
         return np.mean([self.cnn_lstm.predict(X), self.lstm.predict(X)], axis=0)
 

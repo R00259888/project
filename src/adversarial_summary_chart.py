@@ -90,7 +90,8 @@ def __build_figure():
     return figure, heatmap_axis, literature_axis
 
 def __plot_heatmap(ax, heatmap_matrix):
-    heatmap_cmap = plt.get_cmap("RdYlGn").copy()
+    heatmap_cmap = plt.get_cmap("RdYlGn_r").copy()
+    heatmap_cmap.set_bad("lightgrey")
     heatmap_image = ax.imshow(heatmap_matrix, cmap=heatmap_cmap, vmin=0, vmax=1, aspect="auto")
     __label_heatmap(ax, heatmap_matrix)
     return heatmap_image
