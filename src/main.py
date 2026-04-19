@@ -13,6 +13,8 @@ from .models.lstm_model import LSTMModel
 from .models.cnn_lstm_model import CNNLSTMModel
 from .models.blended_lstm_model import BlendedLSTMModel
 
+tf.config.experimental.enable_op_determinism()
+
 @functools.lru_cache(maxsize=None)
 def get_dataset(model):
     match model:

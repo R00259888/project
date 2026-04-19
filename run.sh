@@ -24,7 +24,7 @@ if [ -z "$COLAB_MODE" ]; then
     python3 -m pip install -r requirements.txt
 fi
 
-python3 -m src.experiments
+PYTHONHASHSEED=0 python3 -m src.experiments
 
 if [ -z "$COLAB_MODE" ] && [ -f "report/Thesis.tex" ]; then
     (

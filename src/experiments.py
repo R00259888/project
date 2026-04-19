@@ -33,7 +33,7 @@ experiments = [
     {
         "dataset": "IKDD",
         "model": "KeystrokeDynamicsNNModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7, 0.8],
         "epochs": 50, # Kamra et al. "Fig. 6: Loss Curve"
         "variants": vector_variants,
@@ -43,7 +43,7 @@ experiments = [
         # https://doi.org/10.1109/DICCT64131.2025.10986481
         "dataset": "KeystrokeDynamicsBenchmarkDataset",
         "model": "KeystrokeDynamicsNNModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7, 0.8],
         "epochs": 50,
         "variants": vector_variants,
@@ -52,7 +52,7 @@ experiments = [
     {
         "dataset": "KeyRecs",
         "model": "LSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7, 0.8],
         "epochs": 50,
         "variants": vector_variants,
@@ -62,7 +62,7 @@ experiments = [
         # https://doi.org/10.1109/ICECET52533.2021.9698532
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "LSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7, 0.8],
         "epochs": 50,
         "variants": time_series_variants,
@@ -71,7 +71,7 @@ experiments = [
     {
         "dataset": "Minecraft-Mouse-Dynamics-Dataset",
         "model": "CNNLSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7, 0.8],
         "epochs": 50,
         "variants": time_series_variants,
@@ -81,7 +81,7 @@ experiments = [
         # https://doi.org/10.48550/arXiv.2504.21415
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "LSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
@@ -89,7 +89,7 @@ experiments = [
     {
         "dataset": "Mouse-Dynamics-Challenge",
         "model": "CNNLSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "epochs": 50,
         "variants": time_series_variants,
         "plot_metrics": ["eer", "auc", "accuracy"]
@@ -97,7 +97,7 @@ experiments = [
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "LSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7],
         "epochs": 50,
         "variants": time_series_variants,
@@ -106,7 +106,7 @@ experiments = [
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "CNNLSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7],
         "epochs": 50,
         "variants": time_series_variants,
@@ -115,7 +115,7 @@ experiments = [
     {
         "dataset": "Amalgamated-Mouse-Dynamics",
         "model": "BlendedLSTMModel",
-        "subject_count": 5,
+        "subject_count": 7,
         "train_percs": [0.7],
         "epochs": 50,
         "variants": time_series_variants,
