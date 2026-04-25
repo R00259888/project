@@ -9,7 +9,7 @@ data_from_literature = [
     # "Table 3 Evaluation results for KNN, RF, and LGBM"
     # "Table 4 Mean values for KNN, RF, and LGBM"
 
-    # ("Minecraft-Mouse-Dynamics-Dataset", "RF (Scenario A)", "\\cite{https://doi.org/10.1109/ICECET52533.2021.9698532}", "70:30", 0.001, None, 0.927),
+    ("Minecraft-Mouse-Dynamics-Dataset", "RF (Scenario A)", "\\cite{https://doi.org/10.1109/ICECET52533.2021.9698532}", "no split", 0.001, None, 0.927),
     ("Minecraft-Mouse-Dynamics-Dataset", "RF (Scenario B)", "\\cite{https://doi.org/10.1109/ICECET52533.2021.9698532}", "70:30", 0.396, None, 0.616),
     # TABLE I and II
 

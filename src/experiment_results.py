@@ -65,6 +65,7 @@ def best_baseline_eer_by_dataset():
 def best_literature_eer_by_dataset():
     literature_df = read_literature_dataframe()
     literature_df = literature_df[literature_df["eer"].notna()]
+    literature_df = literature_df[literature_df["split"] != "no split"]
 
     best_eer_row_indices = literature_df.groupby("dataset")["eer"].idxmin()
     best_eer_rows = literature_df.loc[best_eer_row_indices, ["dataset", "eer", "model"]]
