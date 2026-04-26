@@ -3,9 +3,9 @@ data_from_literature = [
     ("KeystrokeDynamicsBenchmarkDataset", "CNN-LSTM", "\\cite{https://doi.org/10.1109/DICCT64131.2025.10986481}", "80:20", None, 0.960, 0.990),
     # "TABLE I: Proposed Model Result Metrics"
 
-    ("KeyRecs", "KNN", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.270, None, 0.672),
-    ("KeyRecs", "RF", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.270, None, 0.806),
-    ("KeyRecs", "LGBM", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.200, None, 0.811),
+    ("KeyRecs", "KNN", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.0027, None, 0.672),
+    ("KeyRecs", "RF", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.0027, None, 0.806),
+    ("KeyRecs", "LGBM", "\\cite{https://doi.org/10.1007/s42452-025-07449-5}", "-", 0.002, None, 0.811),
     # "Table 3 Evaluation results for KNN, RF, and LGBM"
     # "Table 4 Mean values for KNN, RF, and LGBM"
 
