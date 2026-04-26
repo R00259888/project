@@ -13,7 +13,7 @@ data_from_literature = [
     ("Minecraft-Mouse-Dynamics-Dataset", "RF (Scenario B)", "\\cite{https://doi.org/10.1109/ICECET52533.2021.9698532}", "70:30", 0.396, None, 0.616),
     # TABLE I and II
 
-    ("Mouse-Dynamics-Challenge", "LSTM", "\\cite{https://doi.org/10.48550/arXiv.2504.21415}", "pre-split", 0.0614, 0.9773, None)
+    ("Mouse-Dynamics-Challenge", "LT-AMouse", "\\cite{https://doi.org/10.48550/arXiv.2504.21415}", "pre-split", 0.0614, 0.9773, None)
     # "TABLE III: User-Averaged Models Performance Comparison on Balabit Dataset"
 ]
 
