@@ -37,7 +37,7 @@ def read_literature_dataframe():
 
 def read_fgsm_literature_dataframe():
     return pd.DataFrame(literature.data_from_literature_fgsm,
-        columns=["dataset", "model", "source", "split", "accuracy", "baseline_accuracy"])
+        columns=["dataset", "model", "source", "split", "baseline_acc", "accuracy"])
 
 def read_fgsm_dataframe():
     return __read_grouped_attack_defence_dataframe("adversarial", "None")
